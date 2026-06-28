@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<link rel="stylesheet" href="{% static 'css/account_form.css' %}">
+
+<div class="simple-form-page">
+  <h2 class="simple-form-page__title">{{ form_title|default:"Change Email" }}</h2>
+
+  <form method="POST" class="simple-form">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="simple-form__group">
+        <label class="simple-form__label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="simple-form__error">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="simple-form__submit">Save</button>
+    <a href="{% url 'account' %}" class="simple-form__cancel">Cancel</a>
+  </form>
+</div>
+{% endblock %}

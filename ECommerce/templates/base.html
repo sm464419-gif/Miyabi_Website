@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home | Miyabi</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<!-- ══ TOP BAR ══════════════════════════════════ -->
+<div class="header-top">
+    <div class="miy-container">
+        <div class="header-top-inner">
+            <ul class="contact-links">
+                <li>
+                    <a href="#">
+                        <i class="fa fa-phone"></i>
+                        <span class="link-label">+2 95 01 88 821</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fa fa-envelope"></i>
+                        <span class="link-label">info@domain.com</span>
+                    </a>
+                </li>
+            </ul>
+            <!-- Social links always visible including on mobile -->
+            <ul class="social-links">
+                {% for s in social_links %}
+                <li>
+                    <a href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.platform }}">
+                        <i class="fa fa-{{ s.platform }}"></i>
+                    </a>
+                </li>
+                {% empty %}
+                <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
+                <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+                <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
+                <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube"></i></a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ══ HEADER MIDDLE — logo bar ═════════════════ -->
+<div class="header-middle">
+    <div class="miy-container">
+        <div class="header-middle-inner">
+            <button class="hamburger-btn" id="hamburgerBtn"
+                    aria-label="Toggle menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="logo">
+                <a href="{% url 'index' %}">
+                    <img src="{% static 'images/home/miy1.png' %}" alt="Miyabi Logo">
+                </a>
+            </div>
+            <div class="header-right-spacer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ NAV DROPDOWN ═════════════════════════════ -->
+<div class="nav-dropdown" id="navDropdown" aria-hidden="true">
+    <div class="nav-dropdown-inner">
+        <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
+        <a href="{% url 'product' %}"><i class="fa fa-shopping-bag"></i> Shop</a>
+        <a href="{% url 'contact_page' %}"><i class="fa fa-phone"></i> Contact</a>
+        <a href="{% url 'account' %}"><i class="fa fa-user"></i> Account</a>
+        <a href="{% url 'order' %}"><i class="fa fa-star"></i> Orders</a>
+        <a href="{% url 'cart:cart_detail' %}">
+            <i class="fa fa-shopping-cart"></i> Cart
+            <span class="cart-badge-drop">{{ request.session.cart|length|default:0 }}</span>
+        </a>
+        {% if user.is_authenticated %}
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-nav').submit();">
+            <i class="fa fa-sign-out"></i> Logout
+        </a>
+        <form id="logout-nav" method="post" action="{% url 'logout' %}" style="display:none;">
+            {% csrf_token %}
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}"><i class="fa fa-sign-in"></i> Login</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ══ HEADER BOTTOM — desktop search ════════════ -->
+<div class="header-bottom">
+    <div class="miy-container">
+        <div class="header-bottom-inner">
+            <form method="GET" action="{% url 'product' %}">
+                <div class="search-box">
+                    <input type="text" name="q"
+                           placeholder="Search products…"
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit"><i class="fa fa-search"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MOBILE SEARCH BAR ════════════════════════ -->
+<div class="mobile-search-bar">
+    <form method="GET" action="{% url 'product' %}">
+        <input type="text" name="q"
+               placeholder="Search products…"
+               value="{{ request.GET.q|default:'' }}">
+        <button type="submit"><i class="fa fa-search"></i></button>
+    </form>
+</div>
+
+<!-- ══ PAGE CONTENT ═════════════════════════════ -->
+{% block body %}{% endblock %}
+
+<!-- ══ FOOTER ════════════════════════════════════ -->
+<footer class="site-footer">
+    <div class="miy-container">
+        <div class="footer-grid">
+
+            <!-- COL 1 — Brand + Social -->
+            <div class="footer-col">
+                <span class="footer-brand-name">Miyabi</span>
+                <p class="footer-brand-desc">
+                    Miyabi is an online-based Bangladeshi website that offers
+                    100% authentic and premium quality products.
+                </p>
+                <div class="footer-section-title">Social Media</div>
+                <ul class="footer-socials">
+                    {% for s in social_links %}
+                    <li>
+                        <a href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.platform }}">
+                            <i class="fa fa-{{ s.platform }}"></i>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
+                    <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+                    <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube"></i></a></li>
+                    <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- COL 2 — Quick Links + Policy -->
+            <div class="footer-col">
+                <div class="footer-section-title">Quick Links</div>
+                <ul class="footer-links">
+                    <li><a href="{% url 'index' %}">Home</a></li>
+                    <li><a href="{% url 'product' %}">Products</a></li>
+                    <li><a href="{% url 'cart:cart_detail' %}">Cart</a></li>
+                    <li><a href="{% url 'account' %}">Account</a></li>
+                    <li><a href="{% url 'order' %}">Tracking / Orders</a></li>
+                </ul>
+                <div class="footer-section-title">Policy Pages</div>
+                <ul class="footer-links">
+                    <li><a href="{% url 'about' %}">About Us</a></li>
+                    <li><a href="{% url 'privacy_policy' %}">Privacy Policy</a></li>
+                    <li><a href="{% url 'terms' %}">Terms &amp; Conditions</a></li>
+                    <li><a href="{% url 'shipping_delivery' %}">Shipping &amp; Delivery</a></li>
+                    <li><a href="{% url 'refund_returns' %}">Refund and Returns</a></li>
+                </ul>
+            </div>
+
+            <!-- COL 3 — Contact -->
+            <div class="footer-col">
+                <div class="footer-section-title">Contact Us</div>
+                <div class="footer-contact-item">
+                    <i class="fa fa-phone"></i>
+                    <span>+2 95 01 88 821</span>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fa fa-envelope"></i>
+                    <span>info@miyabi.com</span>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fa fa-map-marker"></i>
+                    <span>Dhaka, Bangladesh</span>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fa fa-clock-o"></i>
+                    <span>Sun – Thu: 9:00 AM – 6:00 PM</span>
+                </div>
+            </div>
+
+        </div><!-- /.footer-grid -->
+    </div><!-- /.miy-container -->
+
+    <div class="footer-bottom">
+        <p>Copyright &copy; 2026 Miyabi Inc. All rights reserved. &nbsp;|&nbsp; Designed by AN</p>
+    </div>
+</footer>
+
+<!-- ══ BOTTOM NAV BAR (mobile) ══════════════════ -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Mobile navigation">
+    <div class="bottom-nav-inner">
+        <a href="{% url 'index' %}" class="bottom-nav-item" id="bnav-home">
+            <i class="fa fa-home"></i><span>HOME</span>
+        </a>
+        <a href="{% url 'product' %}" class="bottom-nav-item" id="bnav-products">
+            <i class="fa fa-shopping-bag"></i><span>SHOP</span>
+        </a>
+        <a href="{% url 'cart:cart_detail' %}" class="bottom-nav-item" id="bnav-cart">
+            <span class="bnav-badge" data-count="{{ request.session.cart|length|default:0 }}">
+                <i class="fa fa-shopping-cart"></i>
+            </span>
+            <span>CART</span>
+        </a>
+        <a href="{% url 'account' %}" class="bottom-nav-item" id="bnav-account">
+            <i class="fa fa-user"></i><span>ACCOUNT</span>
+        </a>
+        {% if user.is_authenticated %}
+        <a href="#" class="bottom-nav-item"
+           onclick="event.preventDefault(); document.getElementById('logout-bnav').submit();">
+            <i class="fa fa-sign-out"></i><span>LOGOUT</span>
+        </a>
+        <form id="logout-bnav" method="post" action="{% url 'logout' %}" style="display:none;">
+            {% csrf_token %}
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}" class="bottom-nav-item" id="bnav-login">
+            <i class="fa fa-sign-in"></i><span>LOGIN</span>
+        </a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- ══ CHAT WIDGET (visible on all screen sizes) ══ -->
+<div id="chat-widget">
+    <button id="chat-toggle" onclick="toggleChat()" aria-label="Chat with us">
+        <i class="fa fa-comments"></i>
+    </button>
+
+    <div id="chat-panel">
+        <div class="chat-panel-header">
+            <div>
+                <div class="chat-panel-header-title">Chat with us</div>
+                <div class="chat-panel-header-sub">Choose a platform below</div>
+            </div>
+            <button class="chat-close-btn" onclick="toggleChat()" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="chat-options">
+            {% for s in social_links %}
+                {% if s.show_in_chat %}
+                    {% if s.platform == 'whatsapp' %}
+                        <a href="https://wa.me/{{ s.chat_handle }}" target="_blank" rel="noopener"
+                           class="chat-option-btn whatsapp">
+                            <i class="fa fa-whatsapp"></i> WhatsApp
+                        </a>
+                    {% elif s.platform == 'messenger' %}
+                        <a href="https://m.me/{{ s.chat_handle }}" target="_blank" rel="noopener"
+                           class="chat-option-btn messenger">
+                            <i class="fa fa-facebook"></i> Messenger
+                        </a>
+                    {% elif s.platform == 'instagram' %}
+                        <a href="https://ig.me/m/{{ s.chat_handle }}" target="_blank" rel="noopener"
+                           class="chat-option-btn instagram">
+                            <i class="fa fa-instagram"></i> Instagram
+                        </a>
+                    {% elif s.platform == 'telegram' %}
+                        <a href="https://t.me/{{ s.chat_handle }}" target="_blank" rel="noopener"
+                           class="chat-option-btn telegram">
+                            <i class="fa fa-telegram"></i> Telegram
+                        </a>
+                    {% elif s.platform == 'viber' %}
+                        <a href="viber://chat?number={{ s.chat_handle }}" target="_blank" rel="noopener"
+                           class="chat-option-btn viber">
+                            <i class="fa fa-phone"></i> Viber
+                        </a>
+                    {% else %}
+                        <a href="{{ s.url }}" target="_blank" rel="noopener"
+                           class="chat-option-btn default">
+                            <i class="fa fa-{{ s.platform }}"></i> {{ s.platform|capfirst }}
+                        </a>
+                    {% endif %}
+                {% endif %}
+            {% empty %}
+                <div class="chat-no-options">No chat channels configured yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ══ SCRIPTS ════════════════════════════════════ -->
+<script src="{% static 'js/jquery.js' %}"></script>
+<script>
+(function () {
+    var btn      = document.getElementById('hamburgerBtn');
+    var dropdown = document.getElementById('navDropdown');
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var isOpen = dropdown.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+        btn.setAttribute('aria-expanded', String(isOpen));
+        dropdown.setAttribute('aria-hidden', String(!isOpen));
+    });
+
+    dropdown.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            dropdown.classList.remove('open');
+            btn.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            dropdown.setAttribute('aria-hidden', 'true');
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+            btn.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            dropdown.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+    /* Highlight active bottom-nav item */
+    var path = window.location.pathname;
+    document.querySelectorAll('.bottom-nav-item').forEach(function (item) {
+        var href = item.getAttribute('href');
+        if (href && href !== '#' && path === href) {
+            item.classList.add('active');
+        }
+    });
+    if (path === '/') {
+        var homeBtn = document.getElementById('bnav-home');
+        if (homeBtn) homeBtn.classList.add('active');
+    }
+})();
+
+function toggleChat() {
+    var panel  = document.getElementById('chat-panel');
+    var isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+}
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

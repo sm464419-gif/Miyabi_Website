@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'css/index.css' %}" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   SLIDER WRAPPERS — overflow hidden clips slides
+═══════════════════════════════════════════ */
+.hero-slider-wrap,
+.pop-slider-wrap,
+.reel-slider-wrap {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════
+   TRACKS — flex row, no wrap
+═══════════════════════════════════════════ */
+.hero-slider-track,
+.pop-slider-track,
+.reel-slider-track {
+    display: flex;
+    flex-wrap: nowrap;
+    transition: transform 0.45s cubic-bezier(.4,0,.2,1);
+    will-change: transform;
+}
+
+/* ═══════════════════════════════════════════
+   HERO — each slide = 100% of wrapper
+═══════════════════════════════════════════ */
+.hero-slide {
+    min-width: 100%;
+    flex-shrink: 0;
+}
+.hero-slide-img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    max-height: 480px;
+}
+
+/* ═══════════════════════════════════════════
+   POPULAR CARDS
+═══════════════════════════════════════════ */
+.pop-slide {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: 0 8px;
+}
+
+/* ═══════════════════════════════════════════
+   REEL CARDS
+═══════════════════════════════════════════ */
+.reel-slide {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: 0 6px;
+}
+
+/* ═══════════════════════════════════════════
+   DOTS
+═══════════════════════════════════════════ */
+.hero-dots,
+.pop-dots,
+.reel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+.hero-dot, .pop-dot, .reel-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: none;
+    background: #ccc;
+    cursor: pointer;
+    padding: 0;
+    transition: background .3s;
+}
+.hero-dot.active, .pop-dot.active, .reel-dot.active {
+    background: #7B2CBF;
+}
+
+/* ═══════════════════════════════════════════
+   NAV BUTTONS
+═══════════════════════════════════════════ */
+.hero-prev, .hero-next,
+.pop-prev,  .pop-next,
+.reel-prev, .reel-next {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    background: rgba(123,44,191,.75);
+    color: #fff;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    padding: 6px 14px;
+    cursor: pointer;
+    z-index: 10;
+    border-radius: 4px;
+    transition: background .2s;
+}
+.hero-prev:hover, .pop-prev:hover, .reel-prev:hover,
+.hero-next:hover, .pop-next:hover, .reel-next:hover {
+    background: rgba(123,44,191,1);
+}
+.hero-prev, .pop-prev, .reel-prev { left:  8px; }
+.hero-next, .pop-next, .reel-next { right: 8px; }
+
+/* ═══════════════════════════════════════════
+   REEL PLAY OVERLAY
+═══════════════════════════════════════════ */
+.reel-card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+}
+.reel-card video {
+    width: 100%;
+    display: block;
+    aspect-ratio: 9/16;
+    object-fit: cover;
+}
+.reel-play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,.85);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity .2s;
+}
+.reel-play-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 55%;
+    transform: translate(-50%,-50%);
+    border: solid transparent;
+    border-left-color: #7B2CBF;
+    border-width: 12px 0 12px 20px;
+}
+.reel-card.playing .reel-play-icon { opacity: 0; }
+.reel-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,.7));
+    padding: 16px 10px 10px;
+    color: #fff;
+}
+.reel-overlay p { margin: 0 0 6px; font-size: .9rem; }
+.reel-overlay a {
+    display: inline-block;
+    background: #7B2CBF;
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: .82rem;
+}
+</style>
+{% endblock %}
+
+
+{% block body %}
+
+<!-- ════════════════════════════════
+     HERO SLIDER
+════════════════════════════════ -->
+<section id="slider">
+    <div class="hero-slider-wrap" id="heroWrap">
+        <div class="hero-slider-track" id="heroTrack">
+            <div class="hero-slide">
+                <img src="{% static 'images/home/sli1.jpeg' %}" class="hero-slide-img" alt="Slide 1">
+            </div>
+            <div class="hero-slide">
+                <img src="{% static 'images/home/sli2.jpeg' %}" class="hero-slide-img" alt="Slide 2">
+            </div>
+            <div class="hero-slide">
+                <img src="{% static 'images/home/sli3.jpeg' %}" class="hero-slide-img" alt="Slide 3">
+            </div>
+        </div>
+        <button class="hero-prev" id="heroPrev" aria-label="Previous">&#8249;</button>
+        <button class="hero-next" id="heroNext" aria-label="Next">&#8250;</button>
+    </div>
+    <div class="hero-dots" id="heroDots"></div>
+</section>
+
+
+<!-- ════════════════════════════════
+     MOST POPULAR SLIDER
+════════════════════════════════ -->
+<section class="popular-section">
+    <div class="miy-container">
+        <div class="section-heading"><span>&#9733; Most Popular</span></div>
+        <div class="pop-slider-wrap" id="popWrap">
+            <div class="pop-slider-track" id="popTrack">
+                {% for prod in popular_products %}
+                <div class="pop-slide">
+                    <div class="pop-card">
+                        <span class="pop-badge">&#9733; Popular</span>
+                        <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
+                        <h2>&#2547;{{ prod.price }}</h2>
+                        <p>{{ prod.name }}</p>
+                        <a href="{% url 'cart:cart_add' prod.id %}" class="btn add-to-cart">
+                            <i class="fa fa-shopping-cart"></i> Add to cart
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="text-align:center;padding:20px;width:100%;color:#7B2CBF;">
+                    No popular products yet.
+                </p>
+                {% endfor %}
+            </div>
+            <button class="pop-prev" id="popPrev" aria-label="Previous">&#8249;</button>
+            <button class="pop-next" id="popNext" aria-label="Next">&#8250;</button>
+        </div>
+        <div class="pop-dots" id="popDots"></div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SHOP BY REELS
+════════════════════════════════ -->
+<section class="reels-section">
+    <div class="miy-container">
+        <div class="section-heading"><span>&#127909; Shop by Reels</span></div>
+        <div class="reel-slider-wrap" id="reelWrap">
+            <div class="reel-slider-track" id="reelTrack">
+                {% for reel in reels %}
+                <div class="reel-slide">
+                    <div class="reel-card" id="reel-{{ forloop.counter }}">
+                        <video
+                            src="{{ reel.video.url }}"
+                            loop
+                            playsinline
+                            preload="metadata"
+                            onclick="toggleReel(this)">
+                        </video>
+                        <div class="reel-play-icon"></div>
+                        <div class="reel-overlay">
+                            <p>{{ reel.title }}</p>
+                            <a href="{% url 'cart:cart_add' reel.product.id %}">
+                                <i class="fa fa-shopping-cart"></i> Shop Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="text-align:center;color:#7B2CBF;padding:30px 0;width:100%;">
+                    No reels uploaded yet.
+                </p>
+                {% endfor %}
+            </div>
+            <button class="reel-prev" id="reelPrev" aria-label="Previous">&#8249;</button>
+            <button class="reel-next" id="reelNext" aria-label="Next">&#8250;</button>
+        </div>
+        <div class="reel-dots" id="reelDots"></div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════
+     SIDEBAR + FEATURED PRODUCTS
+════════════════════════════════ -->
+<section class="miy-container shop-section">
+    <div class="shop-row">
+
+        <!-- SIDEBAR -->
+        <div class="left-sidebar">
+            <h2>Category</h2>
+            <div class="category-products">
+                {% for cat in category %}
+                <div class="panel-heading">
+                    <a href="#cat{{ forloop.counter }}" class="cat-toggle">
+                        {{ cat.name }}
+                    </a>
+                </div>
+                <div id="cat{{ forloop.counter }}" class="panel-body">
+                    <ul>
+                        {% for i in cat.subcategory_set.all %}
+                        <li><a href="#">{{ i.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h2>Brands</h2>
+            <div class="brands-name">
+                <ul>
+                    {% for i in brand %}
+                    <li><a href="/?brand={{ i.id }}">{{ i.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- FEATURED PRODUCTS -->
+        <div class="featured-area">
+            <div class="section-heading"><span>Featured Items</span></div>
+            <div class="featured-grid">
+                {% for prod in product %}
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        <div class="productinfo">
+                            <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
+                            <h2>&#2547;{{ prod.price }}</h2>
+                            <p>{{ prod.name }}</p>
+                            <a href="{% url 'cart:cart_add' prod.id %}" class="btn add-to-cart">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ════════════════════════════════
+   HERO SLIDER
+   — Each slide is 100% wide, so moving
+     by (index × 100%) is always correct.
+════════════════════════════════ */
+(function () {
+    var track  = document.getElementById('heroTrack');
+    var dotsEl = document.getElementById('heroDots');
+    if (!track) return;
+    var slides = track.querySelectorAll('.hero-slide');
+    var total  = slides.length;
+    if (!total) return;
+
+    var cur = 0, timer;
+
+    function buildDots() {
+        dotsEl.innerHTML = '';
+        for (var i = 0; i < total; i++) {
+            var d = document.createElement('button');
+            d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+            d.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+            (function (idx) {
+                d.addEventListener('click', function () { goTo(idx); startAuto(); });
+            })(i);
+            dotsEl.appendChild(d);
+        }
+    }
+
+    function goTo(p) {
+        cur = ((p % total) + total) % total;
+        /* Each slide is 100% of the wrapper → shift by cur × 100% */
+        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+        dotsEl.querySelectorAll('.hero-dot').forEach(function (d, i) {
+            d.classList.toggle('active', i === cur);
+        });
+    }
+
+    function startAuto() {
+        clearInterval(timer);
+        timer = setInterval(function () { goTo(cur + 1); }, 5000);
+    }
+
+    document.getElementById('heroPrev').addEventListener('click', function () { goTo(cur - 1); startAuto(); });
+    document.getElementById('heroNext').addEventListener('click', function () { goTo(cur + 1); startAuto(); });
+
+    buildDots();
+    goTo(0);
+    startAuto();
+}());
+
+
+/* ════════════════════════════════
+   POPULAR SLIDER
+   Slides keep a FIXED width (based on the
+   intended perView for the current breakpoint),
+   regardless of how many products exist. If there
+   are fewer products than perView, they simply sit
+   left-aligned at their normal size instead of
+   stretching to fill the row. Nav/dots hide
+   automatically when everything already fits.
+════════════════════════════════ */
+(function () {
+    var track  = document.getElementById('popTrack');
+    var dotsEl = document.getElementById('popDots');
+    var prevBtn = document.getElementById('popPrev');
+    var nextBtn = document.getElementById('popNext');
+    if (!track) return;
+    var slides = track.querySelectorAll('.pop-slide');
+    var total  = slides.length;
+    if (!total) return;
+
+    var perView, pages, cur = 0, timer;
+
+    function setPerView() {
+        perView = window.innerWidth <= 480 ? 1
+                : window.innerWidth <= 768 ? 2 : 3;
+        /* NOTE: perView is no longer clamped to `total`.
+           Slide width stays fixed at (100 / perView)% even
+           when there are fewer items than perView. */
+        pages = Math.max(1, Math.ceil(total / perView));
+
+        var slidePct = 100 / perView;
+        slides.forEach(function (s) {
+            s.style.minWidth = slidePct + '%';
+            s.style.maxWidth = slidePct + '%';
+        });
+    }
+
+    function buildDots() {
+        dotsEl.innerHTML = '';
+        for (var i = 0; i < pages; i++) {
+            var d = document.createElement('button');
+            d.className = 'pop-dot' + (i === 0 ? ' active' : '');
+            d.setAttribute('aria-label', 'Go to page ' + (i + 1));
+            (function (idx) {
+                d.addEventListener('click', function () { goTo(idx); startAuto(); });
+            })(i);
+            dotsEl.appendChild(d);
+        }
+    }
+
+    function updateNavVisibility() {
+        var show = pages > 1;
+        prevBtn.style.display = show ? '' : 'none';
+        nextBtn.style.display = show ? '' : 'none';
+        dotsEl.style.display  = show ? '' : 'none';
+    }
+
+    function goTo(p) {
+        cur = ((p % pages) + pages) % pages;
+        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+        dotsEl.querySelectorAll('.pop-dot').forEach(function (d, i) {
+            d.classList.toggle('active', i === cur);
+        });
+    }
+
+    function startAuto() {
+        clearInterval(timer);
+        if (pages <= 1) return;
+        timer = setInterval(function () { goTo(cur + 1); }, 3500);
+    }
+
+    prevBtn.addEventListener('click', function () { goTo(cur - 1); startAuto(); });
+    nextBtn.addEventListener('click', function () { goTo(cur + 1); startAuto(); });
+    window.addEventListener('resize', function () {
+        setPerView(); buildDots(); updateNavVisibility(); goTo(0);
+    });
+
+    setPerView();
+    buildDots();
+    updateNavVisibility();
+    goTo(0);
+    startAuto();
+}());
+
+
+/* ════════════════════════════════
+   REELS SLIDER  (same fixed-width fix as popular)
+════════════════════════════════ */
+(function () {
+    var track  = document.getElementById('reelTrack');
+    var dotsEl = document.getElementById('reelDots');
+    var prevBtn = document.getElementById('reelPrev');
+    var nextBtn = document.getElementById('reelNext');
+    if (!track) return;
+    var slides = track.querySelectorAll('.reel-slide');
+    var total  = slides.length;
+    if (!total) return;
+
+    var perView, pages, cur = 0, timer;
+
+    function setPerView() {
+        perView = window.innerWidth <= 480 ? 2
+                : window.innerWidth <= 768 ? 2
+                : window.innerWidth <= 992 ? 3 : 4;
+        /* perView is no longer clamped to `total` — reel cards
+           keep their fixed width even when there are fewer reels
+           than perView. */
+        pages = Math.max(1, Math.ceil(total / perView));
+
+        slides.forEach(function (s) {
+            var pct = (100 / perView) + '%';
+            s.style.minWidth = pct;
+            s.style.maxWidth = pct;
+        });
+    }
+
+    function buildDots() {
+        dotsEl.innerHTML = '';
+        for (var i = 0; i < pages; i++) {
+            var d = document.createElement('button');
+            d.className = 'reel-dot' + (i === 0 ? ' active' : '');
+            d.setAttribute('aria-label', 'Go to reel page ' + (i + 1));
+            (function (idx) {
+                d.addEventListener('click', function () { goTo(idx); startAuto(); });
+            })(i);
+            dotsEl.appendChild(d);
+        }
+    }
+
+    function updateNavVisibility() {
+        var show = pages > 1;
+        prevBtn.style.display = show ? '' : 'none';
+        nextBtn.style.display = show ? '' : 'none';
+        dotsEl.style.display  = show ? '' : 'none';
+    }
+
+    function goTo(p) {
+        cur = ((p % pages) + pages) % pages;
+        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+        dotsEl.querySelectorAll('.reel-dot').forEach(function (d, i) {
+            d.classList.toggle('active', i === cur);
+        });
+        /* Pause all videos when page changes */
+        track.querySelectorAll('video').forEach(function (v) {
+            v.pause();
+            v.closest('.reel-card').classList.remove('playing');
+        });
+    }
+
+    function startAuto() {
+        clearInterval(timer);
+        if (pages <= 1) return;
+        timer = setInterval(function () { goTo(cur + 1); }, 4000);
+    }
+
+    prevBtn.addEventListener('click', function () { goTo(cur - 1); startAuto(); });
+    nextBtn.addEventListener('click', function () { goTo(cur + 1); startAuto(); });
+    window.addEventListener('resize', function () {
+        setPerView(); buildDots(); updateNavVisibility(); goTo(0);
+    });
+
+    setPerView();
+    buildDots();
+    updateNavVisibility();
+    goTo(0);
+    startAuto();
+}());
+
+
+/* ════════════════════════════════
+   REEL PLAY / PAUSE TOGGLE
+════════════════════════════════ */
+function toggleReel(video) {
+    var card = video.closest('.reel-card');
+    if (video.paused) {
+        /* Pause every other video first */
+        document.querySelectorAll('.reel-card video').forEach(function (v) {
+            if (v !== video) {
+                v.pause();
+                v.closest('.reel-card').classList.remove('playing');
+            }
+        });
+        video.play();
+        card.classList.add('playing');
+    } else {
+        video.pause();
+        card.classList.remove('playing');
+    }
+}
+
+/* Auto-pause reels scrolled out of view */
+if ('IntersectionObserver' in window) {
+    var reelObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) {
+                var v = entry.target.querySelector('video');
+                if (v) { v.pause(); entry.target.classList.remove('playing'); }
+            }
+        });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.reel-card').forEach(function (card) {
+        reelObserver.observe(card);
+    });
+}
+
+
+/* ════════════════════════════════
+   CATEGORY ACCORDION
+════════════════════════════════ */
+document.querySelectorAll('.cat-toggle').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+        e.preventDefault();
+        var target = document.querySelector(this.getAttribute('href'));
+        if (!target) return;
+        var isOpen = target.classList.contains('open');
+        document.querySelectorAll('.panel-body').forEach(function (b) {
+            b.classList.remove('open');
+        });
+        if (!isOpen) target.classList.add('open');
+    });
+});
+</script>
+{% endblock %}

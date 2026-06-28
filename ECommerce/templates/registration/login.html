@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'css/login.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<section class="login-section">
+    <div class="login-card">
+
+        <h2>Login to your account</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="field-group">
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="field-errors">
+                    {{ field.errors }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="form-footer-links">
+                <a href="{% url 'password_reset' %}" class="forgot-link">
+                    Forgot Password?
+                </a>
+            </div>
+
+            <button type="submit" class="login-submit-btn">
+                Login
+            </button>
+
+            <a href="{% url 'signup' %}" class="signup-link">
+                Create your account →
+            </a>
+
+        </form>
+
+    </div>
+</section>
+
+{% endblock %}
+

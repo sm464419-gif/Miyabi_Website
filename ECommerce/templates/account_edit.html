@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<link rel="stylesheet" href="{% static 'css/account_edit.css' %}">
+
+<div class="edit-page">
+  <h2 class="edit-page__title">Edit Profile</h2>
+
+  <form method="POST" enctype="multipart/form-data" class="edit-form">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="edit-form__group">
+        <label class="edit-form__label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="edit-form__error">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="edit-form__submit">Save Changes</button>
+    <a href="{% url 'account' %}" class="edit-form__cancel">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'css/contact.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<div class="contact-page">
+
+    <h2 class="page-title">Contact <strong>Us</strong></h2>
+
+    <!-- MAP -->
+    <div class="map-responsive">
+        <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7305.9318828408195!2d90.41372559104656!3d23.712910264783652!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b9ab6de2be2b%3A0x60d6ef7acaa27a88!2sNarinda%2C%20Dhaka!5e0!3m2!1sen!2sbd!4v1775489539817!5m2!1sen!2sbd"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+    </div>
+
+    <!-- FORM + INFO -->
+    <div class="contact-layout">
+
+        <div class="contact-form-box">
+            <h2 class="section-title">Get In Touch</h2>
+            <div class="status-msg" id="statusMsg"></div>
+
+            <form id="main-contact-form" method="post">
+                {% csrf_token %}
+                <div class="contact-grid-fields">
+                    <input type="text"  name="name"    class="input-field"              required placeholder="Name">
+                    <input type="email" name="email"   class="input-field"              required placeholder="Email">
+                    <input type="text"  name="subject" class="input-field field-full"   required placeholder="Subject">
+                    <textarea           name="message" class="textarea-field field-full" required rows="6" placeholder="Your Message Here"></textarea>
+                </div>
+                <div class="submit-row">
+                    <input type="submit" class="contact-submit-btn" value="Submit">
+                </div>
+            </form>
+        </div>
+
+        <div class="contact-info-box">
+            <h2 class="section-title">Contact Info</h2>
+            <address>
+                <p>E-Shopper Inc.</p>
+                <p>935 W. Webster Ave New Streets Chicago, IL 60614, NY</p>
+                <p>Newyork USA</p>
+                <p>Mobile: +2346 17 38 93</p>
+                <p>Fax: 1-714-252-0026</p>
+                <p>Email: info@e-shopper.com</p>
+            </address>
+
+            <h2 class="section-title">Social Networking</h2>
+            <ul class="social-list">
+                <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                <li><a href="#"><i class="fa fa-google-plus"></i></a></li>
+                <li><a href="#"><i class="fa fa-youtube"></i></a></li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ════════════════════════════════
+   CONTACT FORM — client-side feedback
+   The form still submits normally via POST (Django handles it).
+   This JS only shows a loading state and prevents double-submit.
+════════════════════════════════ */
+(function () {
+    var form   = document.getElementById('main-contact-form');
+    var btn    = form.querySelector('.contact-submit-btn');
+    var msgEl  = document.getElementById('statusMsg');
+
+    if (!form) return;
+
+    form.addEventListener('submit', function () {
+        /* Disable button to prevent double-submit */
+        btn.disabled = true;
+        btn.value    = 'Sending…';
+    });
+
+    /* If Django re-renders the page with ?sent=1 in the URL,
+       show a success banner without relying on Bootstrap alerts */
+    if (window.location.search.indexOf('sent=1') !== -1) {
+        msgEl.textContent = 'Your message has been sent. We\'ll be in touch soon!';
+        msgEl.className   = 'status-msg success';
+    }
+}());
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load cart_tag %}
+{% load static %}
+
+{% block body %}
+<link rel="stylesheet" href="{% static 'css/cart_detail.css' %}">
+
+<section class="cart-page">
+    <div class="cart-container">
+
+        <!-- BREADCRUMBS -->
+        <nav class="cart-breadcrumbs" aria-label="breadcrumb">
+            <a href="#">Home</a>
+            <span class="cart-breadcrumbs__sep">/</span>
+            <span class="cart-breadcrumbs__current">Shopping Cart</span>
+        </nav>
+
+        <!-- CART TABLE (desktop/tablet) -->
+        <div class="cart-table">
+            <div class="cart-table__head">
+                <div class="cart-col cart-col--item">Item</div>
+                <div class="cart-col cart-col--desc"></div>
+                <div class="cart-col cart-col--price">Price</div>
+                <div class="cart-col cart-col--qty">Quantity</div>
+                <div class="cart-col cart-col--total">Total</div>
+                <div class="cart-col cart-col--del"></div>
+            </div>
+
+            <div class="cart-table__body">
+                {% for key, value in request.session.cart.items %}
+                <div class="cart-row">
+
+                    <div class="cart-col cart-col--item">
+                        <img src="{{ value.image }}" alt="{{ value.name }}" class="cart-row__image">
+                    </div>
+
+                    <div class="cart-col cart-col--desc">
+                        <h4 class="cart-row__name">{{ value.name }}</h4>
+                    </div>
+
+                    <div class="cart-col cart-col--price">
+                        <span class="cart-row__label">Price</span>
+                        <p class="cart-row__price">৳{{ value.price }}</p>
+                    </div>
+
+                    <div class="cart-col cart-col--qty">
+                        <span class="cart-row__label">Quantity</span>
+                        <div class="cart-stepper">
+                            <a href="{% url 'cart:item_decrement' value.product_id %}" class="cart-stepper__btn">&minus;</a>
+                            <input type="text" value="{{ value.quantity }}" readonly class="cart-stepper__input">
+                            <a href="{% url 'cart:item_increment' value.product_id %}" class="cart-stepper__btn">+</a>
+                        </div>
+                    </div>
+
+                    <div class="cart-col cart-col--total">
+                        <span class="cart-row__label">Total</span>
+                        <p class="cart-row__total">৳{{ value.price|multiply:value.quantity }}</p>
+                    </div>
+
+                    <div class="cart-col cart-col--del">
+                        <a href="{% url 'cart:item_clear' key %}" class="cart-row__delete" aria-label="Remove item">
+                            <i class="fa fa-times"></i>
+                        </a>
+                    </div>
+
+                </div>
+                {% empty %}
+                <p class="cart-empty">Your cart is empty.</p>
+                {% endfor %}
+            </div>
+
+            <div class="cart-table__foot">
+                <h4 class="cart-subtotal__label">Sub Total:</h4>
+                <h3 class="cart-subtotal__amount">৳{{ cart_total_amount }}</h3>
+            </div>
+        </div>
+
+        <!-- CHECKOUT BUTTON -->
+        <div class="cart-actions">
+            <button type="button" class="cart-btn" id="openCheckout">
+                Checkout
+            </button>
+        </div>
+
+    </div>
+</section>
+
+<!-- CHECKOUT MODAL -->
+<div class="cart-modal" id="checkoutModal" aria-hidden="true">
+    <div class="cart-modal__overlay" id="checkoutOverlay"></div>
+    <div class="cart-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+
+        <div class="cart-modal__header">
+            <h5 class="cart-modal__title" id="checkoutTitle">Checkout Details</h5>
+            <button type="button" class="cart-modal__close" id="closeCheckout" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="cart-modal__body">
+            <form method="post" action="{% url 'checkout' %}" class="cart-form">
+                {% csrf_token %}
+
+                <div class="cart-form__group">
+                    <label for="checkoutPhone">Phone</label>
+                    <input type="text" id="checkoutPhone" name="phone" class="cart-form__input">
+                </div>
+
+                <div class="cart-form__group">
+                    <label for="checkoutAddress">Address</label>
+                    <textarea id="checkoutAddress" name="address" class="cart-form__textarea"></textarea>
+                </div>
+
+                <div class="cart-form__group">
+                    <label for="checkoutPincode">Pincode</label>
+                    <input type="text" id="checkoutPincode" name="pincode" class="cart-form__input">
+                </div>
+
+                <button type="submit" class="cart-btn cart-btn--block">
+                    Place Order
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modal = document.getElementById('checkoutModal');
+    var openBtn = document.getElementById('openCheckout');
+    var closeBtn = document.getElementById('closeCheckout');
+    var overlay = document.getElementById('checkoutOverlay');
+
+    function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeModal();
+        }
+    });
+});
+</script>
+
+{% endblock %}

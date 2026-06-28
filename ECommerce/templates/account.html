@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<link rel="stylesheet" href="{% static 'css/account.css' %}">
+
+<div class="acct-page">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="acct-alert acct-alert--success">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="acct-layout">
+
+    <!-- LEFT: Profile Card -->
+    <div class="acct-profile">
+      {% if profile.picture %}
+        <img src="{{ profile.picture.url }}" alt="Profile" class="acct-profile__avatar">
+      {% else %}
+        <div class="acct-profile__avatar acct-profile__avatar--fallback">
+          {{ request.user.username|first|upper }}
+        </div>
+      {% endif %}
+
+      <h2 class="acct-profile__name">
+        {{ request.user.get_full_name|default:request.user.username }}
+      </h2>
+      <p class="acct-profile__meta">{{ request.user.email }}</p>
+      {% if profile.phone %}
+        <p class="acct-profile__meta acct-profile__meta--last">{{ profile.phone }}</p>
+      {% endif %}
+
+      <a href="{% url 'account_edit' %}" class="acct-profile__edit-btn">
+        Edit Profile
+      </a>
+    </div>
+
+    <!-- RIGHT: Panels -->
+    <div class="acct-panels">
+
+      <!-- Account Settings -->
+      <div class="acct-panel">
+        <div class="acct-panel__header">
+          <h3><i class="fa fa-cog"></i>&nbsp;Account Settings</h3>
+        </div>
+        <div class="acct-panel__body acct-panel__body--links">
+          <a href="{% url 'change_password' %}" class="acct-link">
+            <i class="fa fa-lock"></i> Change Password
+          </a>
+          <a href="{% url 'change_email' %}" class="acct-link">
+            <i class="fa fa-envelope"></i> Change Email
+          </a>
+          <a href="#" class="acct-link">
+            <i class="fa fa-shield"></i> Security Settings
+          </a>
+          <a href="#" class="acct-link">
+            <i class="fa fa-mobile"></i> Two-Factor Authentication (2FA)
+          </a>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div class="acct-panel">
+        <div class="acct-panel__header">
+          <h3><i class="fa fa-shopping-bag"></i>&nbsp;Orders / Purchase History</h3>
+        </div>
+        <div class="acct-panel__body">
+          {% if orders %}
+            <div class="acct-orders">
+              {% for o in orders %}
+              <div class="acct-orders__row">
+
+                <div class="acct-orders__cell acct-orders__cell--product">
+                  <span class="acct-orders__label">Product</span>
+                  <div class="acct-orders__product">
+                    {% if o.image %}
+                      <img src="{{ o.image.url }}" alt="" class="acct-orders__thumb">
+                    {% endif %}
+                    <span>{{ o.product }}</span>
+                  </div>
+                </div>
+
+                <div class="acct-orders__cell">
+                  <span class="acct-orders__label">Qty</span>
+                  <span>{{ o.quantity }}</span>
+                </div>
+
+                <div class="acct-orders__cell">
+                  <span class="acct-orders__label">Total</span>
+                  <span>৳{{ o.total }}</span>
+                </div>
+
+                <div class="acct-orders__cell">
+                  <span class="acct-orders__label">Date</span>
+                  <span>{{ o.date }}</span>
+                </div>
+
+                <div class="acct-orders__cell">
+                  <span class="acct-orders__label">Status</span>
+                  <span class="acct-status
+                    {% if o.status == 'delivered' %}acct-status--delivered
+                    {% elif o.status == 'cancelled' %}acct-status--cancelled
+                    {% elif o.status == 'shipped' %}acct-status--shipped
+                    {% elif o.status == 'processing' %}acct-status--processing
+                    {% else %}acct-status--default{% endif %}">
+                    {{ o.get_status_display }}
+                  </span>
+                </div>
+
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="acct-orders__empty">No orders yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

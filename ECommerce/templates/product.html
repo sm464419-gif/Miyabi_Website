@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'css/product.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<div class="product-page">
+    <div class="miy-container">
+
+        <!-- Mobile sidebar toggle — hidden on desktop via CSS -->
+        <button class="sidebar-toggle" id="sidebarToggle">
+            &#9776; Filter by Category &amp; Brand
+        </button>
+
+        <div class="product-layout">
+
+            <!-- ════════════════════════
+                 SIDEBAR
+            ════════════════════════ -->
+            <div class="left-sidebar" id="leftSidebar">
+
+                <h3 class="sidebar-title">Category</h3>
+                <div class="accordion" id="accordion">
+                    {% for cat in category %}
+                    <div class="acc-item">
+                        <div class="acc-header">
+                            <span>{{ cat.name }}</span>
+                            <div class="acc-icon">+</div>
+                        </div>
+                        <div class="acc-body">
+                            <ul>
+                                {% for i in cat.subcategory_set.all %}
+                                <li>
+                                    <a href="/product/?category={{ i.id }}">
+                                        {{ i.name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h3 class="sidebar-title">Brands</h3>
+                <div class="brands-box">
+                    <ul>
+                        {% for i in brand %}
+                        <li>
+                            <a href="/product/?brand={{ i.id }}">
+                                {{ i.name }}
+                                <span>(50)</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- ════════════════════════
+                 PRODUCTS
+            ════════════════════════ -->
+            <div class="product-area">
+
+                <div class="product-toolbar">
+                    <h2>Featured Items</h2>
+                </div>
+
+                <div class="product-grid">
+                    {% for prod in product %}
+                    <div class="product-card">
+                        <div class="product-image-wrapper">
+                            <div class="productinfo">
+                                <img src="/{{ prod.image }}" alt="{{ prod.name }}">
+                                <h2>&#2547;{{ prod.price }}</h2>
+                                <p>{{ prod.name }}</p>
+                                <a href="{% url 'cart:cart_add' prod.id %}" class="add-to-cart">
+                                    <i class="fa fa-shopping-cart"></i> Add to cart
+                                </a>
+                            </div>
+                            <div class="choose">
+                                <a href="{% url 'product_detail' prod.id %}">
+                                    <i class="fa fa-plus-square"></i> View Product
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- PAGINATION -->
+                <div class="pagination-wrap">
+                    {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}" class="page-btn">&#8249;</a>
+                    {% else %}
+                    <span class="page-btn disabled">&#8249;</span>
+                    {% endif %}
+
+                    {% for num in products.paginator.page_range %}
+                        {% if products.number == num %}
+                        <span class="page-btn active">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}" class="page-btn">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}" class="page-btn">&#8250;</a>
+                    {% else %}
+                    <span class="page-btn disabled">&#8250;</span>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ════════════════════════════════
+   ACCORDION — one open at a time
+════════════════════════════════ */
+(function () {
+    var items = document.querySelectorAll('.acc-item');
+
+    items.forEach(function (item) {
+        var header = item.querySelector('.acc-header');
+        header.addEventListener('click', function () {
+            var isOpen = item.classList.contains('open');
+            /* close all */
+            items.forEach(function (i) { i.classList.remove('open'); });
+            /* open clicked one if it was closed */
+            if (!isOpen) item.classList.add('open');
+        });
+    });
+}());
+
+
+/* ════════════════════════════════
+   MOBILE SIDEBAR TOGGLE
+════════════════════════════════ */
+(function () {
+    var btn      = document.getElementById('sidebarToggle');
+    var sidebar  = document.getElementById('leftSidebar');
+
+    if (!btn || !sidebar) return;
+
+    btn.addEventListener('click', function () {
+        var isOpen = sidebar.classList.toggle('open');
+        btn.innerHTML = isOpen
+            ? '&#10005; Hide Filters'
+            : '&#9776; Filter by Category &amp; Brand';
+    });
+
+    /* Re-show sidebar if viewport grows past mobile breakpoint */
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('open');
+            sidebar.style.display = '';
+            btn.innerHTML = '&#9776; Filter by Category &amp; Brand';
+        }
+    });
+}());
+</script>
+{% endblock %}
+

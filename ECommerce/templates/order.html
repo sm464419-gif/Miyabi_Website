@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="{% static 'css/order.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<section id="cart_items">
+    <div class="miy-container">
+
+        <div class="breadcrumbs">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'index' %}">Home</a></li>
+                <li class="active">Your Orders</li>
+            </ol>
+        </div>
+
+        {% if order %}
+
+            {% for i in order %}
+            <div class="order-card">
+
+                <!-- CARD HEADER -->
+                <div class="order-card-header">
+                    <span><strong>Order:</strong> {{ i.product|truncatechars:30 }}</span>
+                    <span><strong>Date:</strong> {{ i.date }}</span>
+                    <span><strong>Total:</strong> &#2547;{{ i.total }}</span>
+                    <span class="status-badge status-{{ i.status }}">
+                        {% if i.status == 'ordered' %}    &#128722; Ordered
+                        {% elif i.status == 'processing' %}⚙️ Processing
+                        {% elif i.status == 'shipped' %}   &#128666; Shipped
+                        {% elif i.status == 'delivered' %} &#9989; Delivered
+                        {% elif i.status == 'cancelled' %} &#10060; Cancelled
+                        {% endif %}
+                    </span>
+                </div>
+
+                <!-- TRACKING BAR -->
+                <div class="tracking-bar">
+
+                    <div class="track-step
+                        {% if i.status == 'ordered' %}current
+                        {% elif i.status == 'processing' or i.status == 'shipped' or i.status == 'delivered' %}done
+                        {% endif %}">
+                        <div class="track-icon"><i class="fa fa-check"></i></div>
+                        <span class="track-label">Ordered</span>
+                    </div>
+
+                    <div class="track-step
+                        {% if i.status == 'processing' %}current
+                        {% elif i.status == 'shipped' or i.status == 'delivered' %}done
+                        {% endif %}">
+                        <div class="track-icon"><i class="fa fa-cog"></i></div>
+                        <span class="track-label">Processing</span>
+                    </div>
+
+                    <div class="track-step
+                        {% if i.status == 'shipped' %}current
+                        {% elif i.status == 'delivered' %}done
+                        {% endif %}">
+                        <div class="track-icon"><i class="fa fa-truck"></i></div>
+                        <span class="track-label">Shipped</span>
+                    </div>
+
+                    <div class="track-step {% if i.status == 'delivered' %}current done{% endif %}">
+                        <div class="track-icon"><i class="fa fa-home"></i></div>
+                        <span class="track-label">Delivered</span>
+                    </div>
+
+                </div>
+
+                <!-- PRODUCT ROW -->
+                <div class="order-product-row">
+                    <img src="{{ i.image }}" alt="{{ i.product }}">
+                    <div class="order-product-info">
+                        <h5>{{ i.product }}</h5>
+                        <p>Qty: {{ i.quantity }}</p>
+                    </div>
+                    <div class="order-product-price">
+                        <p>&#2547;{{ i.total }}</p>
+                        <small>&#2547;{{ i.price }} each</small>
+                    </div>
+                </div>
+
+                <!-- SHIPPING DETAILS -->
+                <div class="shipping-box">
+                    <div class="shipping-detail">
+                        <i class="fa fa-map-marker"></i>
+                        <div>
+                            <strong>Delivery Address</strong>
+                            <span>{{ i.address }}</span>
+                        </div>
+                    </div>
+                    <div class="shipping-detail">
+                        <i class="fa fa-phone"></i>
+                        <div>
+                            <strong>Phone</strong>
+                            <span>{{ i.phone }}</span>
+                        </div>
+                    </div>
+                    <div class="shipping-detail">
+                        <i class="fa fa-map-pin"></i>
+                        <div>
+                            <strong>Pincode</strong>
+                            <span>{{ i.pincode }}</span>
+                        </div>
+                    </div>
+                    <div class="shipping-detail">
+                        <i class="fa fa-calendar"></i>
+                        <div>
+                            <strong>Order Date</strong>
+                            <span>{{ i.date }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+
+        {% else %}
+        <div class="empty-order">
+            <i class="fa fa-shopping-bag"></i>
+            <p>You have no orders yet.</p>
+            <a href="{% url 'product' %}">Start Shopping</a>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ════════════════════════════════
+   ORDER PAGE — accordion toggle
+   On mobile, let users tap a card
+   header to collapse/expand the
+   tracking + shipping details.
+════════════════════════════════ */
+(function () {
+    var headers = document.querySelectorAll('.order-card-header');
+
+    headers.forEach(function (header) {
+        /* Only activate collapse on narrow screens */
+        function isMobile() { return window.innerWidth <= 600; }
+
+        header.style.cursor = 'default';
+
+        header.addEventListener('click', function () {
+            if (!isMobile()) return;
+
+            var card    = header.closest('.order-card');
+            var body    = card.querySelector('.tracking-bar');
+            var prodRow = card.querySelector('.order-product-row');
+            var shipBox = card.querySelector('.shipping-box');
+
+            [body, prodRow, shipBox].forEach(function (el) {
+                if (!el) return;
+                if (el.style.display === 'none') {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        });
+
+        window.addEventListener('resize', function () {
+            if (!isMobile()) {
+                var card = header.closest('.order-card');
+                ['.tracking-bar', '.order-product-row', '.shipping-box'].forEach(function (sel) {
+                    var el = card.querySelector(sel);
+                    if (el) el.style.display = '';
+                });
+            }
+        });
+    });
+}());
+</script>
+{% endblock %}
