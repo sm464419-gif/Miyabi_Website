@@ -24,7 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5xmhvawk$%-+rreht6#_t&f0fu)+@ytj=*vtxiey65+5g0_*$x'
+# Moved out of source control. Falls back to the old dev key locally,
+# but on Render set a SECRET_KEY environment variable in the dashboard.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-5xmhvawk$%-+rreht6#_t&f0fu)+@ytj=*vtxiey65+5g0_*$x'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -45,6 +50,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Cloudinary — must come before your own apps so the storage
+    # backend is registered before anything tries to use it.
+    'cloudinary_storage',
+    'cloudinary',
+
     'app.apps.AppConfig',
     'cart',
 
@@ -142,17 +153,50 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
+# ── Media files (user-uploaded product photos, etc.) ──────────────
+# MEDIA_URL/MEDIA_ROOT were missing before — that alone made uploads
+# 404 with no settings to tell Django where to save or serve them.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ── Cloudinary credentials ─────────────────────────────────────────
+# Get these from your Cloudinary dashboard, then set them as
+# environment variables in Render (Settings → Environment), NOT here.
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# ── Storage backends (Django 5+/6 style) ───────────────────────────
+# default  -> all FileField/ImageField uploads go to Cloudinary,
+#             so they survive Render restarts/redeploys.
+# staticfiles -> unchanged, still served locally via WhiteNoise.
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 DEFAULT_AUTO_FIELD='django.db.models.BigAutoField'
 
 # Source - https://stackoverflow.com/a/6367458
 # Posted by Jordan, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-04-05, License - CC BY-SA 3.0
 
+# ── Email ────────────────────────────────────────────────────────
+# Password moved out of source control. Set EMAIL_HOST_PASSWORD as an
+# environment variable in Render. IMPORTANT: change your Gmail password
+# now if it was ever committed to Git or shared anywhere with the old
+# plaintext value — treat it as compromised.
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = '24101194@uap-bd.edu'
-EMAIL_HOST_PASSWORD = 'Mahathir2002'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '24101194@uap-bd.edu')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 
 LOGIN_REDIRECT_URL='index'
