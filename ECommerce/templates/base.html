@@ -212,9 +212,11 @@
             <i class="fa fa-shopping-bag"></i><span>SHOP</span>
         </a>
         <a href="{% url 'cart:cart_detail' %}" class="bottom-nav-item" id="bnav-cart">
-            <span class="bnav-badge" data-count="{{ request.session.cart|length|default:0 }}">
+            {% with cart_count=request.session.cart|length|default:0 %}
+            <span class="bnav-badge"{% if cart_count > 0 %} data-count="{{ cart_count }}"{% endif %}>
                 <i class="fa fa-shopping-cart"></i>
             </span>
+            {% endwith %}
             <span>CART</span>
         </a>
         <a href="{% url 'account' %}" class="bottom-nav-item" id="bnav-account">

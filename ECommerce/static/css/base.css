@@ -473,17 +473,27 @@ button {
 .bottom-nav-item:hover,
 .bottom-nav-item.active { background: var(--purple-faint); }
 
-/* Cart badge */
+/* Cart badge — wrapper sized to match the icon exactly,
+   so the bubble offset is always relative to a consistent
+   box instead of shifting with glyph width. */
 .bnav-badge {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
 }
 
-.bnav-badge::after {
+/* Bubble only renders when data-count is actually present
+   (see base.html: the attribute is omitted entirely when
+   the cart is empty), so an empty cart shows a plain icon
+   with no stray "0" badge. */
+.bnav-badge[data-count]::after {
     content: attr(data-count);
     position: absolute;
-    top: -6px;
-    right: -10px;
+    top: -5px;
+    right: -8px;
     background: var(--purple);
     color: var(--white);
     border-radius: 50%;
@@ -494,6 +504,7 @@ button {
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    line-height: 1;
 }
 
 /* ════════════════════════════════════════════════
