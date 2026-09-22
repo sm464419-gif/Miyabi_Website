@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 
@@ -36,12 +37,29 @@ SECRET_KEY = os.environ.get(
     "django-insecure-5xmhvawk$%-+rreht6#_t&f0fu)+@ytj=*vtxiey65+5g0_*$x"
 )
 
-DEBUG = True
+# FIX: was hardcoded True. Render sets a RENDER env var automatically on
+# its servers, so this is False in production and True everywhere else
+# (your machine, most other hosts) without you touching it per-environment.
+DEBUG = "RENDER" not in os.environ
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     ".onrender.com",
+]
+
+# Render gives each web service its own hostname via this env var.
+# Appending it explicitly (in addition to the wildcard above) covers you
+# if you ever tighten ALLOWED_HOSTS to exact hostnames later.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# FIX: required by Django whenever a form (e.g. login, checkout, admin)
+# is POSTed over HTTPS from a host not explicitly trusted. Without this,
+# every POST request on your live .onrender.com site fails CSRF checks.
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
 ]
 
 
@@ -144,11 +162,15 @@ WSGI_APPLICATION = "ECommerce.wsgi.application"
 # DATABASE
 # ============================================================
 
+# FIX: reads DATABASE_URL when Render provides one (your Postgres
+# instance's Internal Database URL, set as an env var on the web
+# service). Locally, with no DATABASE_URL set, it falls back to the
+# same sqlite file you were already using — no local setup changes.
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 
@@ -222,7 +244,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ============================================================
-# CLOUDINARY  (credentials loaded from .env — not used locally)
+# CLOUDINARY  (credentials loaded from .env locally, from Render's
+# environment variables in production — same three keys either way)
 # ============================================================
 
 CLOUDINARY_STORAGE = {
@@ -235,23 +258,40 @@ CLOUDINARY_STORAGE = {
 # ============================================================
 # STORAGE BACKENDS
 # ─────────────────────────────────────────────────────────────
-# Local development only.
-# Images are saved to MEDIA_ROOT and served via urls.py.
-# When you are ready to deploy to Render, replace "default"
-# with "cloudinary_storage.storage.MediaCloudinaryStorage"
-# and "staticfiles" with WhiteNoise compressed storage.
+# FIX: this now switches automatically instead of needing a manual
+# edit before deploying.
+#
+#   DEBUG == True  (local machine, no RENDER env var):
+#     - media  -> local filesystem, saved under MEDIA_ROOT
+#     - static -> plain StaticFilesStorage (Django dev server serves
+#                 these directly; no compression/hashing, easier to
+#                 debug missing CSS/font files while you're fixing
+#                 things like the Font Awesome path)
+#
+#   DEBUG == False (running on Render):
+#     - media  -> Cloudinary, so uploaded product images/reels persist
+#                 across deploys (Render's own filesystem is wiped on
+#                 every restart)
+#     - static -> WhiteNoise's compressed, hashed storage, served
+#                 directly by the app server with long-term caching
 # ============================================================
 
 STORAGES = {
 
-    # Local filesystem — saves to MEDIA_ROOT/media/
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": (
+            "django.core.files.storage.FileSystemStorage"
+            if DEBUG else
+            "cloudinary_storage.storage.MediaCloudinaryStorage"
+        ),
     },
 
-    # Standard static files
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG else
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 
