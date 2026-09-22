@@ -1,0 +1,596 @@
+/* ==========================================================================
+   PRODUCT DETAIL PAGE — pd- prefix
+   Brand color: --mi-purple
+   Breakpoints: 992px / 768px / 600px / 560px / 380px
+   ========================================================================== */
+
+:root {
+    --mi-purple: #7B2CBF;
+    --mi-purple-dark: #5e1f96;
+    --mi-text: #333;
+    --mi-muted: #888;
+    --mi-border: #eee;
+    --mi-star: #f5a623;
+    --mi-star-off: #ccc;
+}
+
+/* ---------- Page / container ---------- */
+.pd-page {
+    padding: 30px 0;
+}
+
+.pd-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.pd-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 30px;
+}
+
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+
+.pd-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.pd-sidebar-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--mi-text);
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--mi-purple);
+}
+
+/* Accordion */
+.pd-accordion-item {
+    border-bottom: 1px solid var(--mi-border);
+}
+
+.pd-accordion-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--mi-text);
+    cursor: pointer;
+}
+
+.pd-accordion-link {
+    display: block;
+    padding: 12px 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--mi-text);
+    text-decoration: none;
+}
+
+.pd-accordion-icon {
+    color: var(--mi-purple);
+    transition: transform 0.2s ease;
+}
+
+.pd-accordion-open .pd-accordion-icon {
+    transform: rotate(45deg);
+}
+
+.pd-accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+}
+
+.pd-subcat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 4px 12px;
+}
+
+.pd-subcat-list li + li {
+    margin-top: 8px;
+}
+
+.pd-subcat-list a {
+    color: var(--mi-muted);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.pd-subcat-list a:hover {
+    color: var(--mi-purple);
+}
+
+/* Brands */
+.pd-brand-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pd-brand-list li + li {
+    margin-top: 10px;
+}
+
+.pd-brand-list a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--mi-text);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.pd-brand-list a:hover {
+    background: #f6eefc;
+    color: var(--mi-purple);
+}
+
+.pd-brand-count {
+    color: var(--mi-muted);
+    font-size: 13px;
+}
+
+/* Price range */
+.pd-price-range {
+    padding: 4px;
+}
+
+.pd-price-slider {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.pd-price-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--mi-text);
+}
+
+/* ==========================================================================
+   MAIN CONTENT
+   ========================================================================== */
+
+.pd-main {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    min-width: 0;
+}
+
+/* ---------- Product detail ---------- */
+.pd-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 380px) 1fr;
+    gap: 30px;
+}
+
+.pd-detail-image img {
+    width: 100%;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--mi-border);
+}
+
+.pd-product-name {
+    margin: 0 0 6px;
+    font-size: 24px;
+    color: var(--mi-text);
+}
+
+.pd-web-id {
+    margin: 0 0 16px;
+    color: var(--mi-muted);
+    font-size: 13px;
+}
+
+.pd-price-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.pd-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--mi-purple);
+}
+
+.pd-meta p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: var(--mi-text);
+}
+
+/* Buttons */
+.pd-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--mi-purple);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.pd-btn:hover {
+    background-color: var(--mi-purple-dark);
+    color: #fff;
+}
+
+.pd-btn-block {
+    width: 100%;
+}
+
+/* ---------- Recommended items ---------- */
+.pd-section-title {
+    text-align: center;
+    font-size: 20px;
+    color: var(--mi-text);
+    margin: 0 0 24px;
+}
+
+.pd-recommended-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.pd-rec-card {
+    text-align: center;
+    border: 1px solid var(--mi-border);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pd-rec-image img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.pd-rec-price {
+    color: var(--mi-purple);
+    font-size: 18px;
+    margin: 8px 0 0;
+}
+
+.pd-rec-name {
+    margin: 0 0 8px;
+    color: var(--mi-text);
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+/* ---------- Reviews ---------- */
+.pd-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--mi-border);
+}
+
+.pd-tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mi-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+}
+
+.pd-tab-btn.pd-tab-active {
+    color: var(--mi-purple);
+    border-bottom-color: var(--mi-purple);
+}
+
+.pd-tab-panels {
+    padding: 20px 0;
+}
+
+.pd-tab-panel {
+    display: none;
+}
+
+.pd-tab-panel.pd-tab-panel-active {
+    display: block;
+}
+
+.pd-review {
+    border-bottom: 1px solid var(--mi-border);
+    padding: 14px 0;
+}
+
+.pd-review-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.pd-review-avatar {
+    font-size: 28px;
+    color: var(--mi-purple);
+}
+
+.pd-review-user {
+    display: flex;
+    flex-direction: column;
+}
+
+.pd-review-stars i {
+    color: var(--mi-star);
+    font-size: 13px;
+}
+
+.pd-review-stars .fa-star-o {
+    color: var(--mi-star-off);
+}
+
+.pd-review-date {
+    margin-left: auto;
+    color: var(--mi-muted);
+    white-space: nowrap;
+}
+
+.pd-review-comment {
+    margin: 0;
+    color: #444;
+    font-size: 14px;
+}
+
+.pd-no-reviews {
+    color: var(--mi-muted);
+    margin-top: 10px;
+}
+
+/* Review form */
+.pd-review-form {
+    max-width: 500px;
+}
+
+.pd-form-group {
+    margin-bottom: 16px;
+}
+
+.pd-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.pd-star-rating {
+    font-size: 28px;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.pd-star-rating i {
+    color: var(--mi-star);
+    margin-right: 4px;
+}
+
+/* Generic Django widget styling — fields render without class attrs */
+.pd-form-group input[type="text"],
+.pd-form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.pd-form-group input[type="text"]:focus,
+.pd-form-group textarea:focus {
+    outline: none;
+    border-color: var(--mi-purple);
+}
+
+.pd-btn-submit {
+    padding: 10px 28px;
+}
+
+.pd-login-prompt {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.pd-login-prompt a {
+    color: var(--mi-purple);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+/* ---- 992px: sidebar moves above main content, recommended grid to 2 cols ---- */
+@media (max-width: 992px) {
+    .pd-layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .pd-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .pd-sidebar-section {
+        flex: 1 1 220px;
+    }
+
+    .pd-detail {
+        grid-template-columns: 1fr;
+    }
+
+    .pd-detail-image {
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .pd-recommended-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ---- 768px: sidebar sections stack, price/cart row stacks ---- */
+@media (max-width: 768px) {
+    .pd-page {
+        padding: 20px 0;
+    }
+
+    .pd-container {
+        padding: 0 16px;
+    }
+
+    .pd-sidebar {
+        flex-direction: column;
+    }
+
+    .pd-product-name {
+        font-size: 21px;
+    }
+
+    .pd-price {
+        font-size: 24px;
+    }
+
+    .pd-review-head {
+        flex-wrap: wrap;
+    }
+
+    .pd-review-date {
+        margin-left: 0;
+    }
+}
+
+/* ---- 600px: recommended grid to 1 col, price row stacks ---- */
+@media (max-width: 600px) {
+    .pd-recommended-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pd-rec-card {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+    }
+
+    .pd-rec-image {
+        width: 90px;
+        flex-shrink: 0;
+    }
+
+    .pd-rec-card .pd-btn-block {
+        width: auto;
+        margin-left: auto;
+    }
+
+    .pd-price-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .pd-btn-cart {
+        width: 100%;
+    }
+
+    .pd-tabs {
+        gap: 0;
+    }
+
+    .pd-tab-btn {
+        flex: 1;
+        padding: 12px 8px;
+        font-size: 13px;
+        text-align: center;
+    }
+}
+
+/* ---- 560px: simplify recommended card back to stacked, tighten spacing ---- */
+@media (max-width: 560px) {
+    .pd-rec-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .pd-rec-image {
+        width: 100%;
+    }
+
+    .pd-rec-card .pd-btn-block {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .pd-main {
+        gap: 30px;
+    }
+
+    .pd-section-title {
+        font-size: 18px;
+    }
+}
+
+/* ---- 380px: smallest phones ---- */
+@media (max-width: 380px) {
+    .pd-product-name {
+        font-size: 19px;
+    }
+
+    .pd-price {
+        font-size: 21px;
+    }
+
+    .pd-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .pd-star-rating {
+        font-size: 24px;
+    }
+
+    .pd-review-avatar {
+        font-size: 22px;
+    }
+}

@@ -1,0 +1,297 @@
+/* =========================================================
+   Account / Profile Page — custom CSS (no Bootstrap)
+   ========================================================= */
+
+:root {
+  --acct-purple: #7B2CBF;
+  --acct-purple-light: #e0c0ff;
+  --acct-purple-bg: #f9f0ff;
+  --acct-border: #e0c0ff;
+  --acct-row-border: #f0e6ff;
+  --acct-muted: #888;
+  --acct-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.acct-page {
+  font-family: var(--acct-font);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+/* ---------- Alert ---------- */
+
+.acct-alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.acct-alert--success {
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  color: #2e7d32;
+}
+
+/* ---------- Layout ---------- */
+
+.acct-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ---------- Profile card ---------- */
+
+.acct-profile {
+  background: var(--acct-purple-bg);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  border: 1.5px solid var(--acct-border);
+}
+
+.acct-profile__avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--acct-purple);
+  margin: 0 auto 14px;
+  display: block;
+}
+
+.acct-profile__avatar--fallback {
+  background: var(--acct-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #fff;
+}
+
+.acct-profile__name {
+  color: var(--acct-purple);
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.acct-profile__meta {
+  color: var(--acct-muted);
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.acct-profile__meta--last {
+  margin-bottom: 16px;
+}
+
+.acct-profile__edit-btn {
+  display: inline-block;
+  background: var(--acct-purple);
+  color: #fff;
+  padding: 8px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.acct-profile__edit-btn:hover {
+  background: #5a189a;
+}
+
+/* ---------- Panels ---------- */
+
+.acct-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.acct-panel {
+  background: #fff;
+  border-radius: 14px;
+  border: 1.5px solid var(--acct-border);
+  overflow: hidden;
+}
+
+.acct-panel__header {
+  background: var(--acct-purple);
+  padding: 14px 20px;
+}
+
+.acct-panel__header h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 16px;
+}
+
+.acct-panel__body {
+  padding: 16px 20px;
+}
+
+.acct-panel__body--links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.acct-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--acct-purple) !important;
+  text-decoration: none !important;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--acct-row-border);
+  transition: background 0.2s;
+}
+
+.acct-link:hover {
+  background: var(--acct-purple-bg);
+}
+
+.acct-link i {
+  width: 18px;
+  text-align: center;
+  color: var(--acct-purple);
+}
+
+/* ---------- Orders table ---------- */
+
+.acct-orders {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.acct-orders__row {
+  display: grid;
+  grid-template-columns: 2.2fr 0.6fr 0.9fr 1fr 1.1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--acct-row-border);
+}
+
+.acct-orders__row:first-child {
+  border-top: 2px solid var(--acct-purple-light);
+}
+
+.acct-orders__cell {
+  padding: 10px 8px;
+}
+
+.acct-orders__label {
+  display: none; /* shown only on mobile card layout */
+}
+
+.acct-orders__product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acct-orders__thumb {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.acct-orders__empty {
+  color: #aaa;
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+}
+
+/* Status badges */
+
+.acct-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.acct-status--delivered { background: #e8f5e9; color: #2e7d32; }
+.acct-status--cancelled { background: #ffebee; color: #c62828; }
+.acct-status--shipped   { background: #e3f2fd; color: #1565c0; }
+.acct-status--processing{ background: #fff8e1; color: #f57f17; }
+.acct-status--default   { background: #f3e5f5; color: #6a1b9a; }
+
+/* =========================================================
+   Responsive breakpoints
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .acct-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Stack the orders table into cards on small screens */
+@media (max-width: 600px) {
+  .acct-orders__row {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 6px;
+    padding: 14px 4px;
+  }
+
+  .acct-orders__cell {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .acct-orders__label {
+    display: inline-block;
+    color: var(--acct-muted);
+    font-size: 11px;
+    min-width: 56px;
+  }
+}
+
+@media (max-width: 560px) {
+  .acct-page {
+    padding: 28px 14px;
+  }
+
+  .acct-profile {
+    padding: 22px;
+  }
+
+  .acct-panel__header {
+    padding: 12px 16px;
+  }
+
+  .acct-panel__body {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .acct-profile__avatar,
+  .acct-profile__avatar--fallback {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+  }
+
+  .acct-link {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+}

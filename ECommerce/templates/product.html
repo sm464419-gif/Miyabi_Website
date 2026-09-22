@@ -10,7 +10,7 @@
 <div class="product-page">
     <div class="miy-container">
 
-        <!-- Mobile sidebar toggle — hidden on desktop via CSS -->
+        <!-- Mobile sidebar toggle -->
         <button class="sidebar-toggle" id="sidebarToggle">
             &#9776; Filter by Category &amp; Brand
         </button>
@@ -75,7 +75,14 @@
                     <div class="product-card">
                         <div class="product-image-wrapper">
                             <div class="productinfo">
-                                <img src="/{{ prod.image }}" alt="{{ prod.name }}">
+
+                                <!-- FIX: was /{{ prod.image }} — now uses .url -->
+                                {% if prod.image %}
+                                <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
+                                {% else %}
+                                <img src="{% static 'images/no-image.png' %}" alt="No image available">
+                                {% endif %}
+
                                 <h2>&#2547;{{ prod.price }}</h2>
                                 <p>{{ prod.name }}</p>
                                 <a href="{% url 'cart:cart_add' prod.id %}" class="add-to-cart">
@@ -148,8 +155,8 @@
    MOBILE SIDEBAR TOGGLE
 ════════════════════════════════ */
 (function () {
-    var btn      = document.getElementById('sidebarToggle');
-    var sidebar  = document.getElementById('leftSidebar');
+    var btn     = document.getElementById('sidebarToggle');
+    var sidebar = document.getElementById('leftSidebar');
 
     if (!btn || !sidebar) return;
 
@@ -171,4 +178,3 @@
 }());
 </script>
 {% endblock %}
-

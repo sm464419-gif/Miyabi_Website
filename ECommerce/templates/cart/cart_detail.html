@@ -69,15 +69,24 @@
                 {% endfor %}
             </div>
 
+            <!-- FIX: only show the Sub Total row when the cart actually
+                 has items — otherwise an empty cart shows "Sub Total: ৳0"
+                 right under the "Your cart is empty" message. -->
+            {% if request.session.cart %}
             <div class="cart-table__foot">
                 <h4 class="cart-subtotal__label">Sub Total:</h4>
                 <h3 class="cart-subtotal__amount">৳{{ cart_total_amount }}</h3>
             </div>
+            {% endif %}
         </div>
 
         <!-- CHECKOUT BUTTON -->
         <div class="cart-actions">
-            <button type="button" class="cart-btn" id="openCheckout">
+            <!-- FIX: disabled when cart is empty so the modal can't be
+                 opened with nothing to check out. Pairs with the
+                 .cart-btn:disabled style in cart_detail.css. -->
+            <button type="button" class="cart-btn" id="openCheckout"
+                    {% if not request.session.cart %}disabled{% endif %}>
                 Checkout
             </button>
         </div>
@@ -143,7 +152,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.style.overflow = '';
     }
 
-    openBtn.addEventListener('click', openModal);
+    /* FIX: openBtn may be disabled (empty cart), so no listener is
+       needed on click in that state, but keep the check defensive
+       in case disabled is removed dynamically elsewhere. */
+    if (openBtn && !openBtn.disabled) {
+        openBtn.addEventListener('click', openModal);
+    }
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', closeModal);
 

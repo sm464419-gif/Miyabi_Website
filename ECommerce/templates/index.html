@@ -3,166 +3,7 @@
 
 {% block extra_css %}
 <link href="{% static 'css/index.css' %}" rel="stylesheet">
-<style>
-/* ═══════════════════════════════════════════
-   SLIDER WRAPPERS — overflow hidden clips slides
-═══════════════════════════════════════════ */
-.hero-slider-wrap,
-.pop-slider-wrap,
-.reel-slider-wrap {
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-}
 
-/* ═══════════════════════════════════════════
-   TRACKS — flex row, no wrap
-═══════════════════════════════════════════ */
-.hero-slider-track,
-.pop-slider-track,
-.reel-slider-track {
-    display: flex;
-    flex-wrap: nowrap;
-    transition: transform 0.45s cubic-bezier(.4,0,.2,1);
-    will-change: transform;
-}
-
-/* ═══════════════════════════════════════════
-   HERO — each slide = 100% of wrapper
-═══════════════════════════════════════════ */
-.hero-slide {
-    min-width: 100%;
-    flex-shrink: 0;
-}
-.hero-slide-img {
-    width: 100%;
-    display: block;
-    object-fit: cover;
-    max-height: 480px;
-}
-
-/* ═══════════════════════════════════════════
-   POPULAR CARDS
-═══════════════════════════════════════════ */
-.pop-slide {
-    flex-shrink: 0;
-    box-sizing: border-box;
-    padding: 0 8px;
-}
-
-/* ═══════════════════════════════════════════
-   REEL CARDS
-═══════════════════════════════════════════ */
-.reel-slide {
-    flex-shrink: 0;
-    box-sizing: border-box;
-    padding: 0 6px;
-}
-
-/* ═══════════════════════════════════════════
-   DOTS
-═══════════════════════════════════════════ */
-.hero-dots,
-.pop-dots,
-.reel-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 12px;
-}
-.hero-dot, .pop-dot, .reel-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    border: none;
-    background: #ccc;
-    cursor: pointer;
-    padding: 0;
-    transition: background .3s;
-}
-.hero-dot.active, .pop-dot.active, .reel-dot.active {
-    background: #7B2CBF;
-}
-
-/* ═══════════════════════════════════════════
-   NAV BUTTONS
-═══════════════════════════════════════════ */
-.hero-prev, .hero-next,
-.pop-prev,  .pop-next,
-.reel-prev, .reel-next {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    background: rgba(123,44,191,.75);
-    color: #fff;
-    border: none;
-    font-size: 2rem;
-    line-height: 1;
-    padding: 6px 14px;
-    cursor: pointer;
-    z-index: 10;
-    border-radius: 4px;
-    transition: background .2s;
-}
-.hero-prev:hover, .pop-prev:hover, .reel-prev:hover,
-.hero-next:hover, .pop-next:hover, .reel-next:hover {
-    background: rgba(123,44,191,1);
-}
-.hero-prev, .pop-prev, .reel-prev { left:  8px; }
-.hero-next, .pop-next, .reel-next { right: 8px; }
-
-/* ═══════════════════════════════════════════
-   REEL PLAY OVERLAY
-═══════════════════════════════════════════ */
-.reel-card {
-    position: relative;
-    cursor: pointer;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #000;
-}
-.reel-card video {
-    width: 100%;
-    display: block;
-    aspect-ratio: 9/16;
-    object-fit: cover;
-}
-.reel-play-icon {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    width: 52px; height: 52px;
-    background: rgba(255,255,255,.85);
-    border-radius: 50%;
-    pointer-events: none;
-    transition: opacity .2s;
-}
-.reel-play-icon::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 55%;
-    transform: translate(-50%,-50%);
-    border: solid transparent;
-    border-left-color: #7B2CBF;
-    border-width: 12px 0 12px 20px;
-}
-.reel-card.playing .reel-play-icon { opacity: 0; }
-.reel-overlay {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,.7));
-    padding: 16px 10px 10px;
-    color: #fff;
-}
-.reel-overlay p { margin: 0 0 6px; font-size: .9rem; }
-.reel-overlay a {
-    display: inline-block;
-    background: #7B2CBF;
-    color: #fff;
-    padding: 5px 12px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: .82rem;
-}
-</style>
 {% endblock %}
 
 
@@ -175,13 +16,13 @@
     <div class="hero-slider-wrap" id="heroWrap">
         <div class="hero-slider-track" id="heroTrack">
             <div class="hero-slide">
-                <img src="{% static 'images/home/sli1.jpeg' %}" class="hero-slide-img" alt="Slide 1">
+                <img src="{% static 'images/home/slider1.jpg' %}" class="hero-slide-img" alt="Slide 1">
             </div>
             <div class="hero-slide">
-                <img src="{% static 'images/home/sli2.jpeg' %}" class="hero-slide-img" alt="Slide 2">
+                <img src="{% static 'images/home/sli1.jpg' %}" class="hero-slide-img" alt="Slide 2">
             </div>
             <div class="hero-slide">
-                <img src="{% static 'images/home/sli3.jpeg' %}" class="hero-slide-img" alt="Slide 3">
+                <img src="{% static 'images/home/slider2.jpg' %}" class="hero-slide-img" alt="Slide 3">
             </div>
         </div>
         <button class="hero-prev" id="heroPrev" aria-label="Previous">&#8249;</button>

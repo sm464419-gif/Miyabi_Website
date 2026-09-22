@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Home | Miyabi</title>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Self-hosted Font Awesome instead of CDN -->
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
 
     {% block extra_css %}{% endblock %}
@@ -33,7 +34,6 @@
                     </a>
                 </li>
             </ul>
-            <!-- Social links always visible including on mobile -->
             <ul class="social-links">
                 {% for s in social_links %}
                 <li>
@@ -70,11 +70,61 @@
     </div>
 </div>
 
-<!-- ══ NAV DROPDOWN ═════════════════════════════ -->
+<!-- ══ NAV DROPDOWN ═════════════════════════════
+     Now also contains Category / Brand / Subcategory,
+     each as a collapsible accordion panel, so this
+     menu covers the same ground the homepage sidebar
+     used to on its own.
+════════════════════════════════════════════════ -->
 <div class="nav-dropdown" id="navDropdown" aria-hidden="true">
     <div class="nav-dropdown-inner">
         <a href="{% url 'index' %}"><i class="fa fa-home"></i> Home</a>
         <a href="{% url 'product' %}"><i class="fa fa-shopping-bag"></i> Shop</a>
+
+        <!-- CATEGORY ACCORDION -->
+        <div class="nav-acc">
+            <button type="button" class="nav-acc-toggle" data-target="navcatBody">
+                <i class="fa fa-th-large"></i> Category
+                <i class="fa fa-angle-down nav-acc-caret"></i>
+            </button>
+            <div class="nav-acc-body" id="navcatBody">
+                {% for cat in category %}
+                <div class="nav-subacc">
+                    <button type="button" class="nav-subacc-toggle" data-target="navsub{{ forloop.counter }}">
+                        {{ cat.name }}
+                        <i class="fa fa-angle-down nav-acc-caret"></i>
+                    </button>
+                    <div class="nav-subacc-body" id="navsub{{ forloop.counter }}">
+                        <ul>
+                            {% for i in cat.subcategory_set.all %}
+                            <li><a href="#">{{ i.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="nav-acc-empty">No categories yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- BRAND ACCORDION -->
+        <div class="nav-acc">
+            <button type="button" class="nav-acc-toggle" data-target="navbrandBody">
+                <i class="fa fa-tags"></i> Brands
+                <i class="fa fa-angle-down nav-acc-caret"></i>
+            </button>
+            <div class="nav-acc-body" id="navbrandBody">
+                <ul>
+                    {% for i in brand %}
+                    <li><a href="{% url 'product' %}?brand={{ i.id }}">{{ i.name }}</a></li>
+                    {% empty %}
+                    <li class="nav-acc-empty">No brands yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
         <a href="{% url 'contact_page' %}"><i class="fa fa-phone"></i> Contact</a>
         <a href="{% url 'account' %}"><i class="fa fa-user"></i> Account</a>
         <a href="{% url 'order' %}"><i class="fa fa-star"></i> Orders</a>
@@ -86,14 +136,19 @@
         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-nav').submit();">
             <i class="fa fa-sign-out"></i> Logout
         </a>
-        <form id="logout-nav" method="post" action="{% url 'logout' %}" style="display:none;">
-            {% csrf_token %}
-        </form>
         {% else %}
         <a href="{% url 'login' %}"><i class="fa fa-sign-in"></i> Login</a>
         {% endif %}
     </div>
 </div>
+
+<!-- FIX: logout form moved out of .nav-dropdown-inner so it is
+     never treated as a flex child of the nav row -->
+{% if user.is_authenticated %}
+<form id="logout-nav" method="post" action="{% url 'logout' %}" style="display:none;">
+    {% csrf_token %}
+</form>
+{% endif %}
 
 <!-- ══ HEADER BOTTOM — desktop search ════════════ -->
 <div class="header-bottom">
@@ -194,51 +249,64 @@
                 </div>
             </div>
 
-        </div><!-- /.footer-grid -->
-    </div><!-- /.miy-container -->
+        </div>
+    </div>
 
     <div class="footer-bottom">
         <p>Copyright &copy; 2026 Miyabi Inc. All rights reserved. &nbsp;|&nbsp; Designed by AN</p>
     </div>
 </footer>
 
-<!-- ══ BOTTOM NAV BAR (mobile) ══════════════════ -->
+<!-- ══ BOTTOM NAV BAR (mobile) ══════════════════
+     4 items: HOME · SHOP · CART · LOGIN/LOGOUT
+════════════════════════════════════════════════ -->
 <nav class="bottom-nav" id="bottomNav" aria-label="Mobile navigation">
     <div class="bottom-nav-inner">
+
         <a href="{% url 'index' %}" class="bottom-nav-item" id="bnav-home">
-            <i class="fa fa-home"></i><span>HOME</span>
+            <i class="fa fa-home" aria-hidden="true"></i>
+            <span class="bnav-label">HOME</span>
         </a>
-        <a href="{% url 'product' %}" class="bottom-nav-item" id="bnav-products">
-            <i class="fa fa-shopping-bag"></i><span>SHOP</span>
-        </a>
+
+        {% with cart_count=request.session.cart|length|default:0 %}
         <a href="{% url 'cart:cart_detail' %}" class="bottom-nav-item" id="bnav-cart">
-            {% with cart_count=request.session.cart|length|default:0 %}
-            <span class="bnav-badge"{% if cart_count > 0 %} data-count="{{ cart_count }}"{% endif %}>
-                <i class="fa fa-shopping-cart"></i>
+            <span class="bnav-badge"{% if cart_count %} data-count="{{ cart_count }}"{% endif %}>
+                <i class="fa fa-shopping-cart" aria-hidden="true"></i>
             </span>
-            {% endwith %}
-            <span>CART</span>
+            <span class="bnav-label">CART</span>
         </a>
-        <a href="{% url 'account' %}" class="bottom-nav-item" id="bnav-account">
-            <i class="fa fa-user"></i><span>ACCOUNT</span>
+        {% endwith %}
+
+        <a href="{% url 'product' %}" class="bottom-nav-item" id="bnav-products">
+            <i class="fa fa-shopping-bag" aria-hidden="true"></i>
+            <span class="bnav-label">SHOP</span>
         </a>
+
         {% if user.is_authenticated %}
-        <a href="#" class="bottom-nav-item"
+        <a href="#" class="bottom-nav-item" id="bnav-logout"
            onclick="event.preventDefault(); document.getElementById('logout-bnav').submit();">
-            <i class="fa fa-sign-out"></i><span>LOGOUT</span>
+            <i class="fa fa-sign-out" aria-hidden="true"></i>
+            <span class="bnav-label">LOGOUT</span>
         </a>
-        <form id="logout-bnav" method="post" action="{% url 'logout' %}" style="display:none;">
-            {% csrf_token %}
-        </form>
         {% else %}
         <a href="{% url 'login' %}" class="bottom-nav-item" id="bnav-login">
-            <i class="fa fa-sign-in"></i><span>LOGIN</span>
+            <i class="fa fa-sign-in" aria-hidden="true"></i>
+            <span class="bnav-label">LOGIN</span>
         </a>
         {% endif %}
+
     </div>
 </nav>
 
-<!-- ══ CHAT WIDGET (visible on all screen sizes) ══ -->
+<!-- Form kept fully OUTSIDE <nav> so it can never become a grid column -->
+{% if user.is_authenticated %}
+<form id="logout-bnav" method="post" action="{% url 'logout' %}"
+      style="display:none; position:absolute;">
+    {% csrf_token %}
+</form>
+{% endif %}
+
+<!-- ══ CHAT WIDGET ═══════════════════════════════ -->
 <div id="chat-widget">
     <button id="chat-toggle" onclick="toggleChat()" aria-label="Chat with us">
         <i class="fa fa-comments"></i>
@@ -309,7 +377,10 @@
         dropdown.setAttribute('aria-hidden', String(!isOpen));
     });
 
-    dropdown.querySelectorAll('a').forEach(function (link) {
+    /* Only plain links close the dropdown — accordion toggles
+       (Category / Brands / subcategory headers) must NOT close it,
+       otherwise you'd never see the list you just opened. */
+    dropdown.querySelectorAll('.nav-dropdown-inner > a').forEach(function (link) {
         link.addEventListener('click', function () {
             dropdown.classList.remove('open');
             btn.classList.remove('open');
@@ -339,6 +410,37 @@
         var homeBtn = document.getElementById('bnav-home');
         if (homeBtn) homeBtn.classList.add('active');
     }
+
+    /* ── Category / Brand accordion in the nav dropdown ──
+       Generic toggle: any element with .nav-acc-toggle or
+       .nav-subacc-toggle opens/closes the panel named in its
+       data-target, and closes sibling panels at the same level. */
+    function wireAccordion(toggleSelector, bodySelector) {
+        document.querySelectorAll(toggleSelector).forEach(function (toggle) {
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var targetId = toggle.getAttribute('data-target');
+                var body = document.getElementById(targetId);
+                if (!body) return;
+                var isOpen = body.classList.contains('open');
+
+                /* Close sibling panels at this level */
+                var parentList = toggle.closest('.nav-dropdown-inner') || document;
+                parentList.querySelectorAll(bodySelector).forEach(function (b) {
+                    if (b !== body) b.classList.remove('open');
+                });
+                parentList.querySelectorAll(toggleSelector).forEach(function (t) {
+                    if (t !== toggle) t.classList.remove('open');
+                });
+
+                body.classList.toggle('open', !isOpen);
+                toggle.classList.toggle('open', !isOpen);
+            });
+        });
+    }
+
+    wireAccordion('.nav-acc-toggle', '.nav-acc-body');
+    wireAccordion('.nav-subacc-toggle', '.nav-subacc-body');
 })();
 
 function toggleChat() {
