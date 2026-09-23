@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "static"
 
 # Load .env file for local development
 load_dotenv(BASE_DIR / ".env")
@@ -37,30 +38,58 @@ SECRET_KEY = os.environ.get(
     "django-insecure-5xmhvawk$%-+rreht6#_t&f0fu)+@ytj=*vtxiey65+5g0_*$x"
 )
 
-# FIX: was hardcoded True. Render sets a RENDER env var automatically on
-# its servers, so this is False in production and True everywhere else
-# (your machine, most other hosts) without you touching it per-environment.
-DEBUG = "RENDER" not in os.environ
+# CHANGED: matches the portfolio project's pattern — DEBUG is read
+# directly from an env var instead of inferred from Render's presence.
+# You MUST set DEBUG=False explicitly in Render's environment variables
+# for production; if you forget, this defaults to False anyway (safe),
+# but that also means you must set DEBUG=True yourself for local dev
+# if you rely on this var rather than always running locally without
+# it set.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    ".onrender.com",
-]
+# CHANGED: now env-driven like the portfolio project, instead of a
+# hardcoded ".onrender.com" wildcard baked into the code. On Render,
+# set ALLOWED_HOSTS="miyabi-website-7.onrender.com" (comma-separate
+# multiple hosts if needed). Falls back to "*" if unset, which accepts
+# any Host header — fine for quick testing, but set the real env var
+# before going live for real.
+ALLOWED_HOSTS = (
+    os.environ.get("ALLOWED_HOSTS", "").split(",")
+    if os.environ.get("ALLOWED_HOSTS")
+    else ["*"]
+)
 
-# Render gives each web service its own hostname via this env var.
-# Appending it explicitly (in addition to the wildcard above) covers you
-# if you ever tighten ALLOWED_HOSTS to exact hostnames later.
+# Safety net: if Render's own RENDER_EXTERNAL_HOSTNAME is available,
+# append it automatically so you can't lock yourself out just by
+# forgetting to set ALLOWED_HOSTS manually.
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME:
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# FIX: required by Django whenever a form (e.g. login, checkout, admin)
-# is POSTed over HTTPS from a host not explicitly trusted. Without this,
-# every POST request on your live .onrender.com site fails CSRF checks.
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-]
+# CHANGED: now env-driven like the portfolio project. On Render, set
+# CSRF_TRUSTED_ORIGINS="https://miyabi-website-7.onrender.com" —
+# without this set correctly, every POST request (login, checkout,
+# admin) fails with a 403 once DEBUG is False.
+CSRF_TRUSTED_ORIGINS = (
+    os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if os.environ.get("CSRF_TRUSTED_ORIGINS")
+    else []
+)
+
+# Safety net: auto-add an origin for Render's own external hostname so
+# admin/login/checkout don't silently 403 if you forget to set the
+# env var above.
+if RENDER_EXTERNAL_HOSTNAME:
+    auto_origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if auto_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(auto_origin)
+
+
+# ============================================================
+# HTTPS / RENDER PROXY
+# ============================================================
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # ============================================================
@@ -162,10 +191,12 @@ WSGI_APPLICATION = "ECommerce.wsgi.application"
 # DATABASE
 # ============================================================
 
-# FIX: reads DATABASE_URL when Render provides one (your Postgres
-# instance's Internal Database URL, set as an env var on the web
-# service). Locally, with no DATABASE_URL set, it falls back to the
-# same sqlite file you were already using — no local setup changes.
+# CHANGED: matches the portfolio project's pattern — dj_database_url
+# reads DATABASE_URL (your Render Postgres instance) when set, and
+# falls back to a plain local sqlite file otherwise. This REPLACES the
+# earlier /var/data/db.sqlite3 approach, which only works with a paid
+# Render persistent disk and was the leading suspect behind your 500
+# error (the /var/data directory doesn't exist without one).
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -228,15 +259,21 @@ STATIC_URL = "/static/"
 # Where collectstatic collects files for deployment
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Development static folder
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# CHANGED: matches the portfolio project's pattern — only include the
+# dev static folder if it actually exists, otherwise collectstatic can
+# raise an error on Render if the folder was never committed.
+STATICFILES_DIRS = [STATIC_DIR] if STATIC_DIR.is_dir() else []
 
 
 # ============================================================
 # MEDIA FILES
 # ============================================================
+# NOTE: unlike the portfolio project, Miyabi keeps MEDIA_URL/MEDIA_ROOT
+# and Cloudinary below — product images and reel videos are uploaded
+# through the admin, so they need somewhere durable to live. The
+# portfolio project has no user uploads, so it skips this section
+# entirely; Miyabi can't skip it without losing every uploaded image
+# on the next deploy.
 
 MEDIA_URL = "/media/"
 
@@ -258,22 +295,20 @@ CLOUDINARY_STORAGE = {
 # ============================================================
 # STORAGE BACKENDS
 # ─────────────────────────────────────────────────────────────
-# FIX: this now switches automatically instead of needing a manual
-# edit before deploying.
+# NOTE: the portfolio project uses a single flat STATICFILES_STORAGE
+# setting (the older, deprecated style) always pointed at WhiteNoise's
+# compressed storage, even in local dev. Miyabi keeps the newer
+# STORAGES dict instead, since it's the current Django pattern and
+# lets static/media storage differ between dev and production:
 #
-#   DEBUG == True  (local machine, no RENDER env var):
+#   DEBUG == True  (local machine):
 #     - media  -> local filesystem, saved under MEDIA_ROOT
-#     - static -> plain StaticFilesStorage (Django dev server serves
-#                 these directly; no compression/hashing, easier to
-#                 debug missing CSS/font files while you're fixing
-#                 things like the Font Awesome path)
+#     - static -> plain StaticFilesStorage (easier to debug missing
+#                 files, like the earlier Font Awesome path issue)
 #
-#   DEBUG == False (running on Render):
-#     - media  -> Cloudinary, so uploaded product images/reels persist
-#                 across deploys (Render's own filesystem is wiped on
-#                 every restart)
-#     - static -> WhiteNoise's compressed, hashed storage, served
-#                 directly by the app server with long-term caching
+#   DEBUG == False (production / Render):
+#     - media  -> Cloudinary, so uploads persist across deploys
+#     - static -> WhiteNoise's compressed, hashed storage
 # ============================================================
 
 STORAGES = {
@@ -297,13 +332,27 @@ STORAGES = {
 
 
 # ============================================================
+# SECURITY HARDENING (only active when DEBUG is False)
+# ============================================================
+# ADDED: ported from the portfolio project — Miyabi didn't have this
+# before. Without these, cookies could still be sent over plain HTTP
+# even though the site is actually served over HTTPS via Render.
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+
+# ============================================================
 # LOGGING
 # ============================================================
-# FIX: Django's default logging only prints to console when DEBUG=True.
-# With DEBUG=False (production, i.e. on Render), unhandled exceptions
-# were being silently swallowed — the access log showed "500" with no
-# traceback anywhere. This config forces errors to always print to
-# stdout, which Render captures in its Logs tab regardless of DEBUG.
+# Django's default logging only prints to console when DEBUG=True.
+# With DEBUG=False (production), unhandled exceptions were being
+# silently swallowed — the access log showed "500" with no traceback
+# anywhere. This forces errors to always print to stdout, which
+# Render captures in its Logs tab regardless of DEBUG.
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
