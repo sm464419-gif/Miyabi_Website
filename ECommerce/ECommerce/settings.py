@@ -63,7 +63,7 @@ MIDDLEWARE = [
 
 ]
 
-ROOT_URLCONF = 'E_shop.urls'
+ROOT_URLCONF = 'ECommerce.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -80,7 +80,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'E_shop.wsgi.application'
+WSGI_APPLICATION = 'ECommerce.wsgi.application'
 
 
 # Database
