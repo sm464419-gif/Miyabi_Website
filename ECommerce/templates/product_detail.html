@@ -2,6 +2,7 @@
 {% block body %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
+
 <section class="pd-page">
     <div class="pd-container">
         <div class="pd-layout">
@@ -16,7 +17,8 @@
                         <div class="pd-accordion-item">
                             <div class="pd-accordion-head">
                                 {% if cat.subcategories.all %}
-                                <button type="button" class="pd-accordion-toggle" onclick="pdToggleAccordion(this)">
+                                <button type="button" class="pd-accordion-toggle"
+                                        onclick="pdToggleAccordion(this)">
                                     <span>{{ cat.name }}</span>
                                     <span class="pd-accordion-icon"><i class="fa fa-plus"></i></span>
                                 </button>
@@ -28,7 +30,9 @@
                             <div class="pd-accordion-body">
                                 <ul class="pd-subcat-list">
                                     {% for subcategory in cat.subcategories.all %}
-                                    <li><a href="?category={{ subcategory.id }}">{{ subcategory.name }}</a></li>
+                                    <li>
+                                        <a href="?category={{ subcategory.id }}">{{ subcategory.name }}</a>
+                                    </li>
                                     {% endfor %}
                                 </ul>
                             </div>
@@ -72,16 +76,32 @@
             <!-- MAIN CONTENT -->
             <div class="pd-main">
 
+                <!-- ── PRODUCT DETAIL ── -->
                 <div class="pd-detail">
                     <div class="pd-detail-image">
                         <img src="{{ product.image.url }}" alt="{{ product.name }}">
                     </div>
                     <div class="pd-detail-info">
+
                         <h2 class="pd-product-name">{{ product.name }}</h2>
                         <p class="pd-web-id">Web ID: {{ product.id }}</p>
 
+                        <!-- FIX: offer price display -->
                         <div class="pd-price-row">
+                            {% if product.offer_price %}
+                            <div class="pd-price-group">
+                                <span class="pd-price-original">
+                                    <s>৳ {{ product.price }}</s>
+                                </span>
+                                <span class="pd-price">৳ {{ product.offer_price }}</span>
+                                <span class="pd-discount-badge">
+                                    {{ product.discount_percent }}% OFF
+                                </span>
+                            </div>
+                            {% else %}
                             <span class="pd-price">৳ {{ product.price }}</span>
+                            {% endif %}
+
                             <a href="{% url 'cart:cart_add' product.id %}" class="pd-btn pd-btn-cart">
                                 <i class="fa fa-shopping-cart"></i> Add to cart
                             </a>
@@ -97,7 +117,7 @@
                     </div>
                 </div>
 
-                <!-- RECOMMENDED PRODUCTS -->
+                <!-- ── RECOMMENDED PRODUCTS ── -->
                 <div class="pd-recommended">
                     <h2 class="pd-section-title">Recommended Items</h2>
                     <div class="pd-recommended-grid">
@@ -106,9 +126,19 @@
                             <div class="pd-rec-image">
                                 <img src="{{ item.image.url }}" alt="{{ item.name }}">
                             </div>
+
+                            <!-- FIX: offer price in recommended items -->
+                            {% if item.offer_price %}
+                            <p class="pd-rec-original"><s>৳ {{ item.price }}</s></p>
+                            <h3 class="pd-rec-price">৳ {{ item.offer_price }}</h3>
+                            <span class="pd-rec-badge">{{ item.discount_percent }}% OFF</span>
+                            {% else %}
                             <h3 class="pd-rec-price">৳ {{ item.price }}</h3>
+                            {% endif %}
+
                             <p class="pd-rec-name">{{ item.name }}</p>
-                            <a href="{% url 'cart:cart_add' item.id %}" class="pd-btn pd-btn-cart pd-btn-block">
+                            <a href="{% url 'cart:cart_add' item.id %}"
+                               class="pd-btn pd-btn-cart pd-btn-block">
                                 <i class="fa fa-shopping-cart"></i> Add to cart
                             </a>
                         </div>
@@ -116,20 +146,24 @@
                     </div>
                 </div>
 
-                <!-- REVIEWS TAB -->
+                <!-- ── REVIEWS ── -->
                 <div class="pd-reviews">
                     <div class="pd-tabs">
-                        <button type="button" class="pd-tab-btn pd-tab-active" data-tab="reviews" onclick="pdSwitchTab(this, 'reviews')">
+                        <button type="button" class="pd-tab-btn pd-tab-active"
+                                data-tab="reviews"
+                                onclick="pdSwitchTab(this, 'reviews')">
                             Reviews ({{ reviews|length }})
                         </button>
-                        <button type="button" class="pd-tab-btn" data-tab="write-review" onclick="pdSwitchTab(this, 'write-review')">
+                        <button type="button" class="pd-tab-btn"
+                                data-tab="write-review"
+                                onclick="pdSwitchTab(this, 'write-review')">
                             Write a Review
                         </button>
                     </div>
 
                     <div class="pd-tab-panels">
 
-                        <!-- EXISTING REVIEWS -->
+                        <!-- Existing reviews -->
                         <div class="pd-tab-panel pd-tab-panel-active" id="pd-tab-reviews">
                             {% if reviews %}
                                 {% for review in reviews %}
@@ -148,39 +182,43 @@
                                                 {% endfor %}
                                             </div>
                                         </div>
-                                        <small class="pd-review-date">{{ review.created|date:"M d, Y" }}</small>
+                                        <small class="pd-review-date">
+                                            {{ review.created|date:"M d, Y" }}
+                                        </small>
                                     </div>
                                     <p class="pd-review-comment">{{ review.comment }}</p>
                                 </div>
                                 {% endfor %}
                             {% else %}
-                                <p class="pd-no-reviews">No reviews yet. Be the first to review this product!</p>
+                                <p class="pd-no-reviews">
+                                    No reviews yet. Be the first to review this product!
+                                </p>
                             {% endif %}
                         </div>
 
-                        <!-- WRITE REVIEW FORM -->
+                        <!-- Write review form -->
                         <div class="pd-tab-panel" id="pd-tab-write-review">
                             {% if user.is_authenticated %}
                             <form method="POST" action="" class="pd-review-form">
                                 {% csrf_token %}
-
                                 <div class="pd-form-group">
                                     <label><b>Your Rating</b></label>
                                     <div id="pd-star-rating" class="pd-star-rating">
                                         {% for i in "12345" %}
-                                        <i class="fa fa-star-o" data-value="{{ forloop.counter }}" onclick="pdSetRating({{ forloop.counter }})"></i>
+                                        <i class="fa fa-star-o"
+                                           data-value="{{ forloop.counter }}"
+                                           onclick="pdSetRating({{ forloop.counter }})"></i>
                                         {% endfor %}
                                     </div>
-                                    <input type="hidden" name="rating" id="pd-rating-input" required>
+                                    <input type="hidden" name="rating"
+                                           id="pd-rating-input" required>
                                 </div>
-
                                 <div class="pd-form-group">
                                     <label><b>Your Comment</b></label>
                                     <textarea name="comment" rows="4"
                                               placeholder="Share your experience with this product…"
                                               required></textarea>
                                 </div>
-
                                 <button type="submit" class="pd-btn pd-btn-submit">
                                     <i class="fa fa-paper-plane"></i> Submit Review
                                 </button>
@@ -200,17 +238,59 @@
     </div>
 </section>
 
+<style>
+/* ── Offer price styles for product detail ── */
+.pd-price-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pd-price-original {
+    font-size: 16px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.pd-discount-badge {
+    background: #e74c3c;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* ── Offer price in recommended cards ── */
+.pd-rec-original {
+    font-size: 12px;
+    color: #999;
+    margin: 4px 0 0;
+    text-decoration: line-through;
+}
+
+.pd-rec-badge {
+    display: inline-block;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+}
+</style>
+
 <script>
 function pdToggleAccordion(btn) {
-    var item = btn.closest('.pd-accordion-item');
+    var item   = btn.closest('.pd-accordion-item');
     var isOpen = item.classList.contains('pd-accordion-open');
-
     document.querySelectorAll('#pd-accordion .pd-accordion-item').forEach(function (i) {
         i.classList.remove('pd-accordion-open');
         var body = i.querySelector('.pd-accordion-body');
         if (body) body.style.maxHeight = null;
     });
-
     if (!isOpen) {
         item.classList.add('pd-accordion-open');
         var body = item.querySelector('.pd-accordion-body');

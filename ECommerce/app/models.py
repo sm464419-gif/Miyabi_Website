@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 from django import forms
 import datetime
 
@@ -34,6 +35,9 @@ class Product(models.Model):
     image        = models.ImageField(upload_to='ecoming')
     name         = models.CharField(max_length=100)
     price        = models.IntegerField()
+    # ── NEW: offer price field ──
+    offer_price  = models.IntegerField(null=True, blank=True,
+                   help_text='Leave blank if no offer. Set lower than price.')
     Availability = models.CharField(choices=AVAILABILITY_CHOICES, null=True, max_length=100)
     date         = models.DateField(auto_now_add=True)
     is_popular   = models.BooleanField(default=False)
@@ -41,9 +45,24 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    # Helper: discount percentage
+    @property
+    def discount_percent(self):
+        if self.offer_price and self.offer_price < self.price:
+            return round(((self.price - self.offer_price) / self.price) * 100)
+        return None
+
+    # Helper: active selling price
+    @property
+    def active_price(self):
+        if self.offer_price and self.offer_price < self.price:
+            return self.offer_price
+        return self.price
+
 
 class UserCreateForm(UserCreationForm):
-    email = forms.EmailField(required=True, label='Email', error_messages={'exists': 'This already exists'})
+    email = forms.EmailField(required=True, label='Email',
+                             error_messages={'exists': 'This already exists'})
 
     class Meta:
         model  = User
@@ -79,13 +98,55 @@ class Contact_us(models.Model):
         return self.email
 
 
+# ── NEW: Coupon model ──
+class Coupon(models.Model):
+    DISCOUNT_TYPE_CHOICES = [
+        ('percentage', 'Percentage (%)'),
+        ('fixed',      'Fixed Amount (৳)'),
+    ]
+    code            = models.CharField(max_length=50, unique=True)
+    discount_type   = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES,
+                                       default='percentage')
+    discount        = models.DecimalField(max_digits=10, decimal_places=2,
+                      help_text='e.g. 10 = 10% off or ৳10 off depending on type')
+    is_active       = models.BooleanField(default=True)
+    valid_from      = models.DateTimeField()
+    valid_to        = models.DateTimeField()
+    minimum_amount  = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                      help_text='Minimum cart total required to use this coupon')
+    usage_limit     = models.PositiveIntegerField(default=0,
+                      help_text='0 = unlimited')
+    used_count      = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.code
+
+    def is_valid(self):
+        now = timezone.now()
+        if not self.is_active:
+            return False
+        if now < self.valid_from or now > self.valid_to:
+            return False
+        if self.usage_limit > 0 and self.used_count >= self.usage_limit:
+            return False
+        return True
+
+    def get_discount_amount(self, cart_total):
+        if self.discount_type == 'percentage':
+            return round((cart_total * self.discount) / 100, 2)
+        return min(self.discount, cart_total)
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('ordered',    'Ordered'),
-        ('processing', 'Processing'),
-        ('shipped',    'Shipped'),
-        ('delivered',  'Delivered'),
-        ('cancelled',  'Cancelled'),
+        ('ordered',          'Ordered'),
+        ('processing',       'Processing'),
+        ('shipped',          'Shipped'),
+        ('on_delivery',      'On Delivery'),
+        ('partial_delivery', 'Partial Delivery'),
+        ('delivered',        'Delivered'),
+        ('cancelled',        'Cancelled'),
+        ('returned',         'Returned'),
     ]
 
     image    = models.ImageField(upload_to='ecommerce/order/image')
@@ -98,11 +159,11 @@ class Order(models.Model):
     phone    = models.CharField(max_length=10)
     pincode  = models.CharField(max_length=10)
     date     = models.DateField(default=datetime.datetime.today)
-    status   = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='ordered'
-    )
+
+    # ── NEW: status + coupon fields ──
+    status          = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ordered')
+    coupon          = models.ForeignKey(Coupon, null=True, blank=True, on_delete=models.SET_NULL)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.product
@@ -156,8 +217,10 @@ class SocialLink(models.Model):
         help_text="For WhatsApp: number with country code (e.g. 8801XXXXXXXXX). "
                   "For Messenger: your Facebook page username."
     )
-    show_in_chat = models.BooleanField(default=False, help_text="Show this platform in the chat widget?")
-    order        = models.PositiveIntegerField(default=0, help_text="Display order (lower = first)")
+    show_in_chat = models.BooleanField(default=False,
+                   help_text="Show this platform in the chat widget?")
+    order        = models.PositiveIntegerField(default=0,
+                   help_text="Display order (lower = first)")
 
     class Meta:
         ordering = ['order']
@@ -176,6 +239,58 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.product.name} ({self.rating}★)"
+
+
+# ── NEW: Supplier model ──
+class Supplier(models.Model):
+    name    = models.CharField(max_length=200)
+    phone   = models.CharField(max_length=20)
+    email   = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    note    = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+# ── NEW: SMS Promotion model ──
+class SMSPromotion(models.Model):
+    title   = models.CharField(max_length=200)
+    message = models.TextField()
+    sent_at = models.DateTimeField(null=True, blank=True)
+    is_sent = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+
+# ── NEW: Landing Page model ──
+class LandingPage(models.Model):
+    title      = models.CharField(max_length=200)
+    slug       = models.SlugField(unique=True)
+    content    = models.TextField()
+    is_active  = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
+# ── NEW: Product Attribute models ──
+class Attribute(models.Model):
+    name = models.CharField(max_length=100)  # e.g. Color, Size
+
+    def __str__(self):
+        return self.name
+
+
+class AttributeValue(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE,
+                                  related_name='values')
+    value     = models.CharField(max_length=100)  # e.g. Red, XL
+
+    def __str__(self):
+        return f"{self.attribute.name}: {self.value}"
 
 
 # ── User Profile ──

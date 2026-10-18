@@ -76,14 +76,25 @@
                         <div class="product-image-wrapper">
                             <div class="productinfo">
 
-                                <!-- FIX: was /{{ prod.image }} — now uses .url -->
+                                <!-- Discount badge -->
+                                {% if prod.offer_price %}
+                                <span class="offer-badge">{{ prod.discount_percent }}% OFF</span>
+                                {% endif %}
+
                                 {% if prod.image %}
                                 <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
                                 {% else %}
                                 <img src="{% static 'images/no-image.png' %}" alt="No image available">
                                 {% endif %}
 
+                                <!-- FIX: show offer price if available -->
+                                {% if prod.offer_price %}
+                                <p class="original-price"><s>৳{{ prod.price }}</s></p>
+                                <h2>৳{{ prod.offer_price }}</h2>
+                                {% else %}
                                 <h2>&#2547;{{ prod.price }}</h2>
+                                {% endif %}
+
                                 <p>{{ prod.name }}</p>
                                 <a href="{% url 'cart:cart_add' prod.id %}" class="add-to-cart">
                                     <i class="fa fa-shopping-cart"></i> Add to cart
@@ -137,19 +148,15 @@
 ════════════════════════════════ */
 (function () {
     var items = document.querySelectorAll('.acc-item');
-
     items.forEach(function (item) {
         var header = item.querySelector('.acc-header');
         header.addEventListener('click', function () {
             var isOpen = item.classList.contains('open');
-            /* close all */
             items.forEach(function (i) { i.classList.remove('open'); });
-            /* open clicked one if it was closed */
             if (!isOpen) item.classList.add('open');
         });
     });
 }());
-
 
 /* ════════════════════════════════
    MOBILE SIDEBAR TOGGLE
@@ -157,21 +164,16 @@
 (function () {
     var btn     = document.getElementById('sidebarToggle');
     var sidebar = document.getElementById('leftSidebar');
-
     if (!btn || !sidebar) return;
-
     btn.addEventListener('click', function () {
         var isOpen = sidebar.classList.toggle('open');
         btn.innerHTML = isOpen
             ? '&#10005; Hide Filters'
             : '&#9776; Filter by Category &amp; Brand';
     });
-
-    /* Re-show sidebar if viewport grows past mobile breakpoint */
     window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('open');
-            sidebar.style.display = '';
             btn.innerHTML = '&#9776; Filter by Category &amp; Brand';
         }
     });

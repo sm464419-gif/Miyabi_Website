@@ -1,0 +1,33 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Miyabi POS{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'pos/css/pos.css' %}">
+</head>
+<body>
+    <header class="pos-header no-print">
+        <a class="pos-brand" href="{% url 'pos:dashboard' %}">
+            MIYABI <span>POS</span>
+        </a>
+
+        <nav class="pos-nav">
+            <a href="{% url 'pos:dashboard' %}">New Sale</a>
+            <a href="{% url 'pos:sales_history' %}">Sales History</a>
+            <a href="{% url 'pos:daily_report' %}">Daily Report</a>
+            <a href="{% url 'admin:index' %}">Admin</a>
+        </nav>
+    </header>
+
+    <main class="pos-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

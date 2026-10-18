@@ -15,7 +15,21 @@
             <span class="cart-breadcrumbs__current">Shopping Cart</span>
         </nav>
 
-        <!-- CART TABLE (desktop/tablet) -->
+        <!-- MESSAGES -->
+        {% if messages %}
+        <div class="cart-messages">
+            {% for message in messages %}
+            <div class="cart-message cart-message--{{ message.tags }}">
+                <i class="fa {% if message.tags == 'success' %}fa-check-circle
+                             {% elif message.tags == 'error' %}fa-times-circle
+                             {% else %}fa-info-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- CART TABLE -->
         <div class="cart-table">
             <div class="cart-table__head">
                 <div class="cart-col cart-col--item">Item</div>
@@ -69,62 +83,202 @@
                 {% endfor %}
             </div>
 
-            <!-- FIX: only show the Sub Total row when the cart actually
-                 has items — otherwise an empty cart shows "Sub Total: ৳0"
-                 right under the "Your cart is empty" message. -->
             {% if request.session.cart %}
-            <div class="cart-table__foot">
-                <h4 class="cart-subtotal__label">Sub Total:</h4>
-                <h3 class="cart-subtotal__amount">৳{{ cart_total_amount }}</h3>
+
+            <!-- ── COUPON SECTION ── -->
+            <div class="cart-coupon">
+                {% if request.session.coupon_code %}
+                <!-- Coupon already applied -->
+                <div class="coupon-applied">
+                    <div class="coupon-applied__info">
+                        <i class="fa fa-tag coupon-applied__icon"></i>
+                        <div>
+                            <span class="coupon-applied__code">
+                                {{ request.session.coupon_code }}
+                            </span>
+                            <span class="coupon-applied__text">
+                                applied —
+                                {% if request.session.coupon_type == 'percentage' %}
+                                    {{ request.session.coupon_pct }}% off
+                                {% else %}
+                                    ৳{{ request.session.coupon_pct }} off
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'cart:remove_coupon' %}" class="coupon-remove">
+                        <i class="fa fa-times"></i> Remove
+                    </a>
+                </div>
+                {% else %}
+                <!-- Coupon input form -->
+                <form method="POST" action="{% url 'cart:apply_coupon' %}" class="coupon-form">
+                    {% csrf_token %}
+                    <div class="coupon-form__inner">
+                        <input type="text"
+                               name="coupon_code"
+                               placeholder="Enter coupon code…"
+                               class="coupon-form__input"
+                               autocomplete="off"
+                               style="text-transform:uppercase;">
+                        <button type="submit" class="coupon-form__btn">
+                            <i class="fa fa-tag"></i> Apply
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
             </div>
+
+            <!-- ── ORDER SUMMARY ── -->
+            <div class="cart-summary">
+
+                <div class="cart-summary__row">
+                    <span class="cart-summary__label">Sub Total</span>
+                    <span class="cart-summary__value">৳{{ cart_total_amount }}</span>
+                </div>
+
+                {% if request.session.coupon_code %}
+                <div class="cart-summary__row cart-summary__row--discount">
+                    <span class="cart-summary__label">
+                        <i class="fa fa-tag"></i>
+                        Coupon ({{ request.session.coupon_code }})
+                    </span>
+                    <span class="cart-summary__value cart-summary__value--green">
+                        − ৳{{ request.session.coupon_discount }}
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="cart-summary__row cart-summary__row--shipping">
+                    <span class="cart-summary__label">Shipping</span>
+                    <span class="cart-summary__value cart-summary__value--green">Free</span>
+                </div>
+
+                <div class="cart-summary__divider"></div>
+
+                <div class="cart-summary__row cart-summary__row--total">
+                    <span class="cart-summary__label">Total</span>
+                    <span class="cart-summary__value cart-summary__value--total">
+                        ৳{% if request.session.coupon_discount %}
+                            {{ cart_total_amount|add:"-0"|floatformat:0 }}
+                            {# Final total calculated in template tag below #}
+                        {% else %}
+                            {{ cart_total_amount }}
+                        {% endif %}
+                    </span>
+                </div>
+
+            </div>
+
             {% endif %}
         </div>
 
         <!-- CHECKOUT BUTTON -->
         <div class="cart-actions">
-            <!-- FIX: disabled when cart is empty so the modal can't be
-                 opened with nothing to check out. Pairs with the
-                 .cart-btn:disabled style in cart_detail.css. -->
             <button type="button" class="cart-btn" id="openCheckout"
                     {% if not request.session.cart %}disabled{% endif %}>
-                Checkout
+                <i class="fa fa-lock"></i> Proceed to Checkout
             </button>
         </div>
 
     </div>
 </section>
 
-<!-- CHECKOUT MODAL -->
+<!-- ══ CHECKOUT MODAL ══ -->
 <div class="cart-modal" id="checkoutModal" aria-hidden="true">
     <div class="cart-modal__overlay" id="checkoutOverlay"></div>
     <div class="cart-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
 
         <div class="cart-modal__header">
-            <h5 class="cart-modal__title" id="checkoutTitle">Checkout Details</h5>
+            <h5 class="cart-modal__title" id="checkoutTitle">
+                <i class="fa fa-shopping-bag" style="margin-right:8px;"></i>
+                Checkout Details
+            </h5>
             <button type="button" class="cart-modal__close" id="closeCheckout" aria-label="Close">&times;</button>
         </div>
 
         <div class="cart-modal__body">
+
+            <!-- Order summary inside modal -->
+            {% if request.session.cart %}
+            <div class="modal-summary">
+                <div class="modal-summary__row">
+                    <span>Sub Total</span>
+                    <span>৳{{ cart_total_amount }}</span>
+                </div>
+                {% if request.session.coupon_code %}
+                <div class="modal-summary__row modal-summary__row--discount">
+                    <span>
+                        <i class="fa fa-tag"></i>
+                        Coupon ({{ request.session.coupon_code }})
+                    </span>
+                    <span class="green">− ৳{{ request.session.coupon_discount }}</span>
+                </div>
+                {% endif %}
+                <div class="modal-summary__row modal-summary__row--total">
+                    <span><b>Total</b></span>
+                    <span>
+                        <b>
+                        ৳{% if request.session.coupon_discount %}
+                            {% widthratio cart_total_amount 1 1 %}
+                            {# JS will calculate final total #}
+                        {% else %}
+                            {{ cart_total_amount }}
+                        {% endif %}
+                        </b>
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
             <form method="post" action="{% url 'checkout' %}" class="cart-form">
                 {% csrf_token %}
 
                 <div class="cart-form__group">
-                    <label for="checkoutPhone">Phone</label>
-                    <input type="text" id="checkoutPhone" name="phone" class="cart-form__input">
+                    <label for="checkoutPhone">
+                        <i class="fa fa-phone"></i> Phone
+                    </label>
+                    <input type="text"
+                           id="checkoutPhone"
+                           name="phone"
+                           class="cart-form__input"
+                           placeholder="01XXXXXXXXX"
+                           required>
                 </div>
 
                 <div class="cart-form__group">
-                    <label for="checkoutAddress">Address</label>
-                    <textarea id="checkoutAddress" name="address" class="cart-form__textarea"></textarea>
+                    <label for="checkoutAddress">
+                        <i class="fa fa-map-marker"></i> Address
+                    </label>
+                    <textarea id="checkoutAddress"
+                              name="address"
+                              class="cart-form__textarea"
+                              placeholder="Full delivery address…"
+                              required></textarea>
                 </div>
 
                 <div class="cart-form__group">
-                    <label for="checkoutPincode">Pincode</label>
-                    <input type="text" id="checkoutPincode" name="pincode" class="cart-form__input">
+                    <label for="checkoutPincode">
+                        <i class="fa fa-map-pin"></i> Pincode
+                    </label>
+                    <input type="text"
+                           id="checkoutPincode"
+                           name="pincode"
+                           class="cart-form__input"
+                           placeholder="1200"
+                           required>
+                </div>
+
+                <!-- Final total display -->
+                <div class="modal-final-total">
+                    <span>You Pay</span>
+                    <span class="modal-final-total__amount" id="modalFinalTotal">
+                        ৳{{ cart_total_amount }}
+                    </span>
                 </div>
 
                 <button type="submit" class="cart-btn cart-btn--block">
-                    Place Order
+                    <i class="fa fa-check-circle"></i> Place Order
                 </button>
 
             </form>
@@ -133,9 +287,205 @@
     </div>
 </div>
 
+<style>
+/* ── MESSAGES ── */
+.cart-messages { margin-bottom: 16px; }
+.cart-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.cart-message--success { background: #e6fff0; color: #27ae60; border: 1px solid #b0f0cc; }
+.cart-message--error   { background: #ffe6e6; color: #e74c3c; border: 1px solid #f0b0b0; }
+.cart-message--info    { background: #e6f4ff; color: #2980b9; border: 1px solid #b0d8f0; }
+
+/* ── COUPON SECTION ── */
+.cart-coupon {
+    padding: 16px 20px;
+    border-top: 1px solid #f0e6ff;
+    background: #faf5ff;
+}
+
+.coupon-form__inner {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.coupon-form__input {
+    flex: 1;
+    min-width: 180px;
+    border: 1.5px solid #e0c0ff;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7B2CBF;
+    outline: none;
+    background: #fff;
+    letter-spacing: 1px;
+    transition: border-color 0.2s;
+}
+.coupon-form__input:focus { border-color: #7B2CBF; }
+.coupon-form__input::placeholder { font-weight: 400; letter-spacing: 0; color: #bbb; }
+
+.coupon-form__btn {
+    background: #7B2CBF;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.coupon-form__btn:hover { background: #5a1a99; }
+
+/* Applied coupon state */
+.coupon-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #e6fff0;
+    border: 1.5px solid #b0f0cc;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.coupon-applied__info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.coupon-applied__icon {
+    color: #27ae60;
+    font-size: 18px;
+}
+
+.coupon-applied__code {
+    font-size: 14px;
+    font-weight: 800;
+    color: #27ae60;
+    font-family: monospace;
+    letter-spacing: 1px;
+    background: #d0f8e0;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.coupon-applied__text {
+    font-size: 13px;
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.coupon-remove {
+    color: #e74c3c;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    background: #ffe6e6;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.coupon-remove:hover { background: #ffd0d0; }
+
+/* ── ORDER SUMMARY ── */
+.cart-summary {
+    padding: 16px 20px;
+    border-top: 1px solid #f0e6ff;
+    background: #fff;
+}
+
+.cart-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.cart-summary__row--discount .cart-summary__label { color: #27ae60; }
+.cart-summary__row--discount .cart-summary__value { color: #27ae60; }
+.cart-summary__row--total { padding-top: 4px; }
+.cart-summary__value--green { color: #27ae60; font-weight: 700; }
+.cart-summary__value--total {
+    font-size: 20px;
+    font-weight: 800;
+    color: #7B2CBF;
+}
+.cart-summary__divider {
+    border: none;
+    border-top: 1.5px dashed #e0c0ff;
+    margin: 8px 0;
+}
+
+/* ── MODAL SUMMARY ── */
+.modal-summary {
+    background: #faf5ff;
+    border: 1px solid #e0c0ff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+}
+.modal-summary__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #555;
+    padding: 4px 0;
+}
+.modal-summary__row--discount { color: #27ae60; }
+.modal-summary__row--total {
+    border-top: 1.5px dashed #e0c0ff;
+    margin-top: 6px;
+    padding-top: 8px;
+    font-size: 15px;
+    color: #7B2CBF;
+}
+.modal-summary__row--discount .green { color: #27ae60; font-weight: 700; }
+
+/* ── FINAL TOTAL IN MODAL ── */
+.modal-final-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0e6ff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7B2CBF;
+}
+.modal-final-total__amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: #7B2CBF;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var modal = document.getElementById('checkoutModal');
+    var modal   = document.getElementById('checkoutModal');
     var openBtn = document.getElementById('openCheckout');
     var closeBtn = document.getElementById('closeCheckout');
     var overlay = document.getElementById('checkoutOverlay');
@@ -152,9 +502,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.style.overflow = '';
     }
 
-    /* FIX: openBtn may be disabled (empty cart), so no listener is
-       needed on click in that state, but keep the check defensive
-       in case disabled is removed dynamically elsewhere. */
     if (openBtn && !openBtn.disabled) {
         openBtn.addEventListener('click', openModal);
     }
@@ -166,6 +513,23 @@ document.addEventListener('DOMContentLoaded', function () {
             closeModal();
         }
     });
+
+    /* ── Calculate final total with coupon discount ── */
+    var subtotal = parseFloat('{{ cart_total_amount }}') || 0;
+    var discount = parseFloat('{{ request.session.coupon_discount|default:0 }}') || 0;
+    var final    = Math.max(subtotal - discount, 0);
+
+    /* Update final total display in modal */
+    var totalEl = document.getElementById('modalFinalTotal');
+    if (totalEl) {
+        totalEl.textContent = '৳' + final.toFixed(0);
+    }
+
+    /* Update final total in cart summary */
+    var summaryTotalEl = document.querySelector('.cart-summary__value--total');
+    if (summaryTotalEl && discount > 0) {
+        summaryTotalEl.textContent = '৳' + final.toFixed(0);
+    }
 });
 </script>
 

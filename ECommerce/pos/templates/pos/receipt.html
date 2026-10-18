@@ -1,0 +1,123 @@
+
+{% extends "pos/base_pos.html" %}
+
+{% block title %}Receipt {{ sale.receipt_number }} | Miyabi{% endblock %}
+
+{% block content %}
+<div class="receipt-page">
+    <div class="receipt-actions no-print">
+        <a class="secondary-button" href="{% url 'pos:dashboard' %}">
+            New Sale
+        </a>
+
+        <button
+            class="primary-button"
+            type="button"
+            onclick="window.print()"
+        >
+            Print Receipt
+        </button>
+    </div>
+
+    <article class="receipt">
+        <header class="receipt-brand">
+            <h1>MIYABI</h1>
+            <p>SALES RECEIPT</p>
+            <p>Thank you for shopping with us!</p>
+        </header>
+
+        <div class="receipt-rule"></div>
+
+        <div class="receipt-meta">
+            <div>
+                <span>Receipt</span>
+                <strong>{{ sale.receipt_number }}</strong>
+            </div>
+
+            <div>
+                <span>Date</span>
+                <strong>{{ sale.created_at|date:"d M Y" }}</strong>
+            </div>
+
+            <div>
+                <span>Time</span>
+                <strong>{{ sale.created_at|date:"h:i A" }}</strong>
+            </div>
+
+            <div>
+                <span>Cashier</span>
+                <strong>{{ sale.cashier.get_username }}</strong>
+            </div>
+
+            <div>
+                <span>Customer</span>
+                <strong>{{ sale.customer_name|default:"Walk-in customer" }}</strong>
+            </div>
+
+            {% if sale.customer_phone %}
+            <div>
+                <span>Phone</span>
+                <strong>{{ sale.customer_phone }}</strong>
+            </div>
+            {% endif %}
+
+            <div>
+                <span>Payment</span>
+                <strong>{{ sale.get_payment_method_display }}</strong>
+            </div>
+        </div>
+
+        <div class="receipt-rule"></div>
+
+        <table class="receipt-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in sale.items.all %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>৳{{ item.unit_price|floatformat:2 }}</td>
+                    <td>৳{{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="receipt-rule"></div>
+
+        <div class="receipt-grand-total">
+            <span>TOTAL</span>
+            <strong>৳{{ sale.total_amount|floatformat:2 }}</strong>
+        </div>
+
+        {% if sale.payment_method == "cash" %}
+        <div class="receipt-meta receipt-cash">
+            <div>
+                <span>Cash received</span>
+                <strong>৳{{ sale.amount_received|floatformat:2 }}</strong>
+            </div>
+
+            <div>
+                <span>Change</span>
+                <strong>৳{{ sale.change_due|floatformat:2 }}</strong>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="receipt-rule"></div>
+
+        <footer class="receipt-footer">
+            <p>Thank you for choosing Miyabi!</p>
+            <p>Please keep this receipt for your records.</p>
+        </footer>
+    </article>
+</div>
+{% endblock %}

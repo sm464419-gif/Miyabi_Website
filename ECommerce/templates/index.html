@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <link href="{% static 'css/index.css' %}" rel="stylesheet">
-
 {% endblock %}
 
 
@@ -44,8 +43,21 @@
                 <div class="pop-slide">
                     <div class="pop-card">
                         <span class="pop-badge">&#9733; Popular</span>
+
+                        {% if prod.offer_price %}
+                        <span class="offer-badge">{{ prod.discount_percent }}% OFF</span>
+                        {% endif %}
+
                         <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
-                        <h2>&#2547;{{ prod.price }}</h2>
+
+                        <!-- FIX: show offer price if available -->
+                        {% if prod.offer_price %}
+                        <p class="original-price"><s>৳{{ prod.price }}</s></p>
+                        <h2>৳{{ prod.offer_price }}</h2>
+                        {% else %}
+                        <h2>৳{{ prod.price }}</h2>
+                        {% endif %}
+
                         <p>{{ prod.name }}</p>
                         <a href="{% url 'cart:cart_add' prod.id %}" class="btn add-to-cart">
                             <i class="fa fa-shopping-cart"></i> Add to cart
@@ -151,8 +163,21 @@
                 <div class="product-card">
                     <div class="product-image-wrapper">
                         <div class="productinfo">
+
+                            {% if prod.offer_price %}
+                            <span class="offer-badge">{{ prod.discount_percent }}% OFF</span>
+                            {% endif %}
+
                             <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
-                            <h2>&#2547;{{ prod.price }}</h2>
+
+                            <!-- FIX: show offer price if available -->
+                            {% if prod.offer_price %}
+                            <p class="original-price"><s>৳{{ prod.price }}</s></p>
+                            <h2>৳{{ prod.offer_price }}</h2>
+                            {% else %}
+                            <h2>৳{{ prod.price }}</h2>
+                            {% endif %}
+
                             <p>{{ prod.name }}</p>
                             <a href="{% url 'cart:cart_add' prod.id %}" class="btn add-to-cart">
                                 <i class="fa fa-shopping-cart"></i> Add to cart
@@ -174,8 +199,6 @@
 <script>
 /* ════════════════════════════════
    HERO SLIDER
-   — Each slide is 100% wide, so moving
-     by (index × 100%) is always correct.
 ════════════════════════════════ */
 (function () {
     var track  = document.getElementById('heroTrack');
@@ -202,7 +225,6 @@
 
     function goTo(p) {
         cur = ((p % total) + total) % total;
-        /* Each slide is 100% of the wrapper → shift by cur × 100% */
         track.style.transform = 'translateX(-' + (cur * 100) + '%)';
         dotsEl.querySelectorAll('.hero-dot').forEach(function (d, i) {
             d.classList.toggle('active', i === cur);
@@ -225,17 +247,10 @@
 
 /* ════════════════════════════════
    POPULAR SLIDER
-   Slides keep a FIXED width (based on the
-   intended perView for the current breakpoint),
-   regardless of how many products exist. If there
-   are fewer products than perView, they simply sit
-   left-aligned at their normal size instead of
-   stretching to fill the row. Nav/dots hide
-   automatically when everything already fits.
 ════════════════════════════════ */
 (function () {
-    var track  = document.getElementById('popTrack');
-    var dotsEl = document.getElementById('popDots');
+    var track   = document.getElementById('popTrack');
+    var dotsEl  = document.getElementById('popDots');
     var prevBtn = document.getElementById('popPrev');
     var nextBtn = document.getElementById('popNext');
     if (!track) return;
@@ -248,11 +263,7 @@
     function setPerView() {
         perView = window.innerWidth <= 480 ? 1
                 : window.innerWidth <= 768 ? 2 : 3;
-        /* NOTE: perView is no longer clamped to `total`.
-           Slide width stays fixed at (100 / perView)% even
-           when there are fewer items than perView. */
         pages = Math.max(1, Math.ceil(total / perView));
-
         var slidePct = 100 / perView;
         slides.forEach(function (s) {
             s.style.minWidth = slidePct + '%';
@@ -309,11 +320,11 @@
 
 
 /* ════════════════════════════════
-   REELS SLIDER  (same fixed-width fix as popular)
+   REELS SLIDER
 ════════════════════════════════ */
 (function () {
-    var track  = document.getElementById('reelTrack');
-    var dotsEl = document.getElementById('reelDots');
+    var track   = document.getElementById('reelTrack');
+    var dotsEl  = document.getElementById('reelDots');
     var prevBtn = document.getElementById('reelPrev');
     var nextBtn = document.getElementById('reelNext');
     if (!track) return;
@@ -327,11 +338,7 @@
         perView = window.innerWidth <= 480 ? 2
                 : window.innerWidth <= 768 ? 2
                 : window.innerWidth <= 992 ? 3 : 4;
-        /* perView is no longer clamped to `total` — reel cards
-           keep their fixed width even when there are fewer reels
-           than perView. */
         pages = Math.max(1, Math.ceil(total / perView));
-
         slides.forEach(function (s) {
             var pct = (100 / perView) + '%';
             s.style.minWidth = pct;
@@ -365,7 +372,6 @@
         dotsEl.querySelectorAll('.reel-dot').forEach(function (d, i) {
             d.classList.toggle('active', i === cur);
         });
-        /* Pause all videos when page changes */
         track.querySelectorAll('video').forEach(function (v) {
             v.pause();
             v.closest('.reel-card').classList.remove('playing');
@@ -398,7 +404,6 @@
 function toggleReel(video) {
     var card = video.closest('.reel-card');
     if (video.paused) {
-        /* Pause every other video first */
         document.querySelectorAll('.reel-card video').forEach(function (v) {
             if (v !== video) {
                 v.pause();
@@ -413,7 +418,6 @@ function toggleReel(video) {
     }
 }
 
-/* Auto-pause reels scrolled out of view */
 if ('IntersectionObserver' in window) {
     var reelObserver = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {

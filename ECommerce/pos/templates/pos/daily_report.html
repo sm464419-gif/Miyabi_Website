@@ -1,0 +1,104 @@
+
+{% extends "pos/base_pos.html" %}
+
+{% block title %}Daily Report | Miyabi POS{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">DAILY SUMMARY</p>
+        <h1>Daily Sales Report</h1>
+        <p class="muted">{{ report_date|date:"l, d F Y" }}</p>
+    </div>
+
+    <button
+        class="secondary-button no-print"
+        onclick="window.print()"
+        type="button"
+    >
+        Print Report
+    </button>
+</section>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span>Sales total</span>
+        <strong>৳{{ total|floatformat:2 }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span>Transactions</span>
+        <strong>{{ count }}</strong>
+    </div>
+</div>
+
+<section class="panel">
+    <h2>Payment breakdown</h2>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Payment method</th>
+                    <th>Transactions</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in by_payment %}
+                <tr>
+                    <td>{{ row.payment_label }}</td>
+                    <td>{{ row.count }}</td>
+                    <td>৳{{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="muted">No sales today.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Today's transactions</h2>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Receipt</th>
+                    <th>Time</th>
+                    <th>Customer</th>
+                    <th>Cashier</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td>{{ sale.receipt_number }}</td>
+                    <td>{{ sale.created_at|date:"h:i A" }}</td>
+                    <td>{{ sale.customer_name }}</td>
+                    <td>{{ sale.cashier.get_username }}</td>
+                    <td>{{ sale.get_payment_method_display }}</td>
+                    <td>৳{{ sale.total_amount|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'pos:receipt' sale.pk %}">Receipt</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="muted">No sales today.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

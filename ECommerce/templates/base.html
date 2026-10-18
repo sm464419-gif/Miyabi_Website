@@ -127,6 +127,11 @@
 
         <a href="{% url 'contact_page' %}"><i class="fa fa-phone"></i> Contact</a>
         <a href="{% url 'account' %}"><i class="fa fa-user"></i> Account</a>
+        {% if user.is_staff %}
+<a href="{% url 'admin_dashboard' %}">
+    <i class="fa fa-tachometer"></i> Dashboard
+</a>
+{% endif %}
         <a href="{% url 'order' %}"><i class="fa fa-star"></i> Orders</a>
         <a href="{% url 'cart:cart_detail' %}">
             <i class="fa fa-shopping-cart"></i> Cart

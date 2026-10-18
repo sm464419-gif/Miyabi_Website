@@ -1,0 +1,444 @@
+
+{% extends "pos/base_pos.html" %}
+
+{% block title %}POS Dashboard | Miyabi{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">RETAIL MANAGEMENT</p>
+        <h1>Point of Sale</h1>
+        <p class="muted">Create a sale, collect payment, and print a receipt.</p>
+    </div>
+
+    <div class="today-summary">
+        <span>Today's sales</span>
+        <strong>৳{{ today_total|floatformat:2 }}</strong>
+        <small>{{ today_count }} transaction{{ today_count|pluralize }}</small>
+    </div>
+</section>
+
+<div class="pos-layout">
+    <section class="panel">
+        <h2>Find products</h2>
+
+        <input
+            id="product-search"
+            class="search-input"
+            type="search"
+            placeholder="Type a product name..."
+            autocomplete="off"
+        >
+
+        <div id="search-status" class="muted small">
+            Start typing to search your inventory.
+        </div>
+
+        <div id="product-results" class="product-results"></div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-title-row">
+            <h2>Current bill</h2>
+            <button type="button" id="clear-cart" class="text-button">
+                Clear
+            </button>
+        </div>
+
+        <div id="cart-empty" class="empty-state">
+            Your bill is empty. Add a product to begin.
+        </div>
+
+        <div id="cart-lines" class="cart-lines"></div>
+
+        <div class="cart-total-row">
+            <span>Total</span>
+            <strong id="cart-total">৳0.00</strong>
+        </div>
+
+        <form id="checkout-form">
+            {% csrf_token %}
+
+            <h3>Customer (optional)</h3>
+
+            <label for="customer-name">Customer name</label>
+            <input
+                id="customer-name"
+                type="text"
+                maxlength="120"
+                placeholder="Walk-in customer"
+            >
+
+            <label for="customer-phone">Phone number (optional)</label>
+            <input
+                id="customer-phone"
+                type="tel"
+                maxlength="30"
+                placeholder="01XXXXXXXXX"
+            >
+
+            <h3>Payment</h3>
+
+            <label for="payment-method">Payment method</label>
+            <select id="payment-method" required>
+                <option value="cash">Cash</option>
+                <option value="card">Card (record only)</option>
+                <option value="mobile_banking">Mobile Banking (record only)</option>
+            </select>
+
+            <div id="cash-field">
+                <label for="amount-received">Cash received (৳)</label>
+                <input
+                    id="amount-received"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Enter amount received"
+                >
+
+                <div class="change-row">
+                    <span>Change</span>
+                    <strong id="change-due">৳0.00</strong>
+                </div>
+            </div>
+
+            <button
+                id="complete-sale"
+                class="primary-button full-width"
+                type="submit"
+            >
+                Complete Sale
+            </button>
+
+            <p id="checkout-message" class="checkout-message" role="status"></p>
+        </form>
+    </section>
+</div>
+
+<section class="panel recent-panel">
+    <div class="panel-title-row">
+        <h2>Recent sales</h2>
+        <a href="{% url 'pos:sales_history' %}">View all</a>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Receipt</th>
+                    <th>Customer</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                    <th>Time</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in recent_sales %}
+                <tr>
+                    <td>{{ sale.receipt_number }}</td>
+                    <td>{{ sale.customer_name }}</td>
+                    <td>{{ sale.get_payment_method_display }}</td>
+                    <td>৳{{ sale.total_amount|floatformat:2 }}</td>
+                    <td>{{ sale.created_at|date:"h:i A" }}</td>
+                    <td>
+                        <a href="{% url 'pos:receipt' sale.pk %}">Receipt</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="muted">No sales recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const searchInput = document.getElementById("product-search");
+    const resultsBox = document.getElementById("product-results");
+    const searchStatus = document.getElementById("search-status");
+    const cartLines = document.getElementById("cart-lines");
+    const cartEmpty = document.getElementById("cart-empty");
+    const totalNode = document.getElementById("cart-total");
+    const amountInput = document.getElementById("amount-received");
+    const changeNode = document.getElementById("change-due");
+    const paymentSelect = document.getElementById("payment-method");
+    const cashField = document.getElementById("cash-field");
+    const checkoutForm = document.getElementById("checkout-form");
+    const checkoutMessage = document.getElementById("checkout-message");
+    const checkoutButton = document.getElementById("complete-sale");
+
+    const cart = new Map();
+
+    const money = value => "৳" + Number(value || 0).toFixed(2);
+
+    const escapeHtml = value =>
+        String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+
+    function getCookie(name) {
+        const match = document.cookie.match(
+            new RegExp("(^|;\\s*)" + name + "=([^;]*)")
+        );
+
+        return match ? decodeURIComponent(match[2]) : "";
+    }
+
+    function cartTotal() {
+        return [...cart.values()].reduce(
+            (sum, item) => sum + Number(item.price) * item.quantity,
+            0
+        );
+    }
+
+    function updateChange() {
+        const received = Number(amountInput.value || 0);
+
+        changeNode.textContent = money(
+            Math.max(0, received - cartTotal())
+        );
+
+        cashField.hidden = paymentSelect.value !== "cash";
+    }
+
+    function renderCart() {
+        cartLines.innerHTML = "";
+
+        cart.forEach((item, id) => {
+            const row = document.createElement("div");
+            row.className = "cart-line";
+
+            row.innerHTML = `
+                <div class="cart-product">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <small>${money(item.price)} each · stock ${item.stock}</small>
+                </div>
+
+                <div class="quantity-control">
+                    <button type="button" data-action="minus" data-id="${id}">−</button>
+                    <span>${item.quantity}</span>
+                    <button type="button" data-action="plus" data-id="${id}">+</button>
+                </div>
+
+                <strong class="line-total">
+                    ${money(Number(item.price) * item.quantity)}
+                </strong>
+
+                <button type="button" class="remove-item"
+                    data-action="remove" data-id="${id}">×</button>
+            `;
+
+            cartLines.appendChild(row);
+        });
+
+        cartEmpty.hidden = cart.size > 0;
+        totalNode.textContent = money(cartTotal());
+
+        updateChange();
+    }
+
+    function addProduct(product) {
+        if (!product.available || product.stock < 1) {
+            checkoutMessage.textContent = "This product is out of stock.";
+            return;
+        }
+
+        const current = cart.get(product.id);
+
+        if (current) {
+            if (current.quantity >= current.stock) {
+                checkoutMessage.textContent =
+                    "You cannot add more than available stock.";
+                return;
+            }
+
+            current.quantity += 1;
+        } else {
+            cart.set(product.id, {...product, quantity: 1});
+        }
+
+        checkoutMessage.textContent = "";
+        renderCart();
+    }
+
+    let searchTimer;
+
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+
+        const query = searchInput.value.trim();
+        resultsBox.innerHTML = "";
+
+        if (!query) {
+            searchStatus.textContent =
+                "Start typing to search your inventory.";
+            return;
+        }
+
+        searchStatus.textContent = "Searching...";
+
+        searchTimer = setTimeout(async () => {
+            try {
+                const response = await fetch(
+                    "{% url 'pos:product_search' %}?q=" +
+                    encodeURIComponent(query)
+                );
+
+                const data = await response.json();
+
+                resultsBox.innerHTML = "";
+
+                if (!response.ok) {
+                    throw new Error("Product search failed.");
+                }
+
+                if (!data.results.length) {
+                    searchStatus.textContent = "No matching products found.";
+                    return;
+                }
+
+                searchStatus.textContent =
+                    `${data.results.length} product(s) found.`;
+
+                data.results.forEach(product => {
+                    const button = document.createElement("button");
+
+                    button.type = "button";
+                    button.className = "product-result";
+                    button.disabled = !product.available;
+
+                    button.innerHTML = `
+                        <span>
+                            <strong>${escapeHtml(product.name)}</strong>
+                            <small>${product.available
+                                ? "Stock: " + product.stock
+                                : "Out of stock"}</small>
+                        </span>
+                        <strong>${money(product.price)}</strong>
+                    `;
+
+                    button.addEventListener("click", () => addProduct(product));
+
+                    resultsBox.appendChild(button);
+                });
+            } catch (error) {
+                searchStatus.textContent =
+                    "Could not search products. Check your connection.";
+            }
+        }, 250);
+    });
+
+    cartLines.addEventListener("click", event => {
+        const button = event.target.closest("button[data-action]");
+
+        if (!button) return;
+
+        const id = Number(button.dataset.id);
+        const item = cart.get(id);
+
+        if (!item) return;
+
+        if (button.dataset.action === "plus") {
+            if (item.quantity < item.stock) {
+                item.quantity += 1;
+            } else {
+                checkoutMessage.textContent =
+                    "No more stock is available for this product.";
+            }
+        } else if (button.dataset.action === "minus") {
+            item.quantity -= 1;
+
+            if (item.quantity <= 0) {
+                cart.delete(id);
+            }
+        } else if (button.dataset.action === "remove") {
+            cart.delete(id);
+        }
+
+        renderCart();
+    });
+
+    document.getElementById("clear-cart").addEventListener("click", () => {
+        cart.clear();
+        checkoutMessage.textContent = "";
+        renderCart();
+    });
+
+    amountInput.addEventListener("input", updateChange);
+    paymentSelect.addEventListener("change", updateChange);
+
+    checkoutForm.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        checkoutMessage.textContent = "";
+
+        if (!cart.size) {
+            checkoutMessage.textContent =
+                "Add at least one product first.";
+            return;
+        }
+
+        const items = [...cart.entries()].map(([id, item]) => ({
+            id,
+            quantity: item.quantity
+        }));
+
+        const paymentMethod = paymentSelect.value;
+
+        const payload = {
+            items,
+            payment_method: paymentMethod,
+            customer_name: document.getElementById("customer-name").value.trim(),
+            customer_phone: document.getElementById("customer-phone").value.trim(),
+            amount_received: paymentMethod === "cash"
+                ? (amountInput.value || "0")
+                : "0"
+        };
+
+        checkoutButton.disabled = true;
+        checkoutButton.textContent = "Processing...";
+
+        try {
+            const response = await fetch("{% url 'pos:checkout' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                checkoutMessage.textContent =
+                    data.error || "Checkout failed.";
+                return;
+            }
+
+            window.location.href = data.receipt_url;
+
+        } catch (error) {
+            checkoutMessage.textContent =
+                "Network error. Please try again.";
+        } finally {
+            checkoutButton.disabled = false;
+            checkoutButton.textContent = "Complete Sale";
+        }
+    });
+
+    renderCart();
+})();
+</script>
+{% endblock %}

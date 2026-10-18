@@ -401,6 +401,25 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
     overflow: hidden;
     transition: box-shadow 0.2s;
 }
+/* Offer price — strikethrough original */
+.original-price {
+    font-size: 13px;
+    color: #999;
+    margin: 4px 0 0;
+    text-decoration: line-through;
+}
+
+/* Discount badge — top right of card */
+.offer-badge {
+    display: inline-block;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
 .product-image-wrapper:hover { box-shadow: 0 4px 16px rgba(123,44,191,0.12); }
 .productinfo { padding: 14px; text-align: center; }
 .productinfo img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; }

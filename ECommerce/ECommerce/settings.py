@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app.apps.AppConfig',
     'cart',
+    "pos",
 
 ]
 CART_SESSION_ID= 'cart'
@@ -63,7 +64,7 @@ MIDDLEWARE = [
 
 ]
 
-ROOT_URLCONF = 'E_shop.urls'
+ROOT_URLCONF = 'ECommerce.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -80,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'E_shop.wsgi.application'
+WSGI_APPLICATION = 'ECommerce.wsgi.application'
 
 
 # Database
@@ -129,6 +130,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Where collectstatic will collect files for deployment
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
