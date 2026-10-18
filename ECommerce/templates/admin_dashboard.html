@@ -523,6 +523,21 @@
             <i class="fa fa-clock-o"></i> Incomplete Orders
         </a>
 
+                <!-- POS MANAGEMENT -->
+        <div class="dash-nav-label">Point of Sale</div>
+
+        <a href="{% url 'pos:terminal' %}" class="dash-nav-item">
+            <i class="fa fa-shopping-cart"></i> POS Terminal
+        </a>
+
+        <a href="{% url 'pos:sales_list' %}" class="dash-nav-item">
+            <i class="fa fa-list-alt"></i> POS Sales History
+        </a>
+
+        <a href="{% url 'pos:daily_report' %}" class="dash-nav-item">
+            <i class="fa fa-bar-chart"></i> POS Sales Reports
+        </a>
+
         <div class="dash-nav-label">Catalogue</div>
         <a href="/admin/portal/app/product/" class="dash-nav-item">
             <i class="fa fa-cube"></i> Products
