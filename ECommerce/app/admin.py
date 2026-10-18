@@ -1,8 +1,9 @@
+from django import forms
 from django.contrib import admin
-from django.db.models import Sum, Count
 from django.utils.html import format_html
 from .models import (
-    Category, Subcategory, Brand, Product,
+    Category, Subcategory, ChildCategory, Concern, Brand, Product,
+    ProductImage, ProductVariant,
     Contact_us, Order, Reel, PolicyPage,
     SocialLink, Review, Coupon, Supplier,
     SMSPromotion, LandingPage, Attribute, AttributeValue
@@ -10,26 +11,119 @@ from .models import (
 
 
 # ════════════════════════════════════════════════
-#  CATEGORY / SUBCATEGORY / BRAND
+#  CATEGORY / SUBCATEGORY / CHILD CATEGORY / CONCERN / BRAND
 # ════════════════════════════════════════════════
-admin.site.register(Category)
-admin.site.register(Subcategory)
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display  = ('name',)
+    search_fields = ('name',)
+
+
+@admin.register(Subcategory)
+class SubcategoryAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'category')
+    list_filter   = ('category',)
+    search_fields = ('name',)
+
+
+@admin.register(ChildCategory)
+class ChildCategoryAdmin(admin.ModelAdmin):
+    list_display  = ('name', 'subcategory', 'get_category')
+    list_filter   = ('subcategory__category', 'subcategory')
+    search_fields = ('name',)
+
+    def get_category(self, obj):
+        return obj.subcategory.category
+    get_category.short_description = 'Category'
+
+
+@admin.register(Concern)
+class ConcernAdmin(admin.ModelAdmin):
+    list_display  = ('name',)
+    search_fields = ('name',)
+
+
 admin.site.register(Brand)
 admin.site.register(Contact_us)
 admin.site.register(Reel)
 
 
 # ════════════════════════════════════════════════
-#  PRODUCT
+#  PRODUCT  (with gallery images + variants inline)
 # ════════════════════════════════════════════════
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
+
+
+class ProductVariantInline(admin.TabularInline):
+    model             = ProductVariant
+    extra             = 0
+    filter_horizontal = ('values',)
+    fields            = ('values', 'sku', 'price', 'quantity', 'image')
+
+
+class ProductAdminForm(forms.ModelForm):
+    # Bullet points as a plain textarea: one point per line (stored as a list)
+    bullet_points = forms.CharField(
+        required=False,
+        label='Bullet points',
+        widget=forms.Textarea(attrs={'rows': 4}),
+        help_text='One bullet point per line.',
+    )
+
+    class Meta:
+        model  = Product
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        points = (self.instance.bullet_points or []) if self.instance.pk else []
+        if points:
+            self.initial['bullet_points'] = '\n'.join(points)
+
+    def clean_bullet_points(self):
+        text = self.cleaned_data.get('bullet_points') or ''
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display  = ('name', 'category', 'subcategory', 'brand',
-                     'price', 'offer_price', 'discount_badge',
-                     'Availability', 'is_popular', 'date')
-    list_filter   = ('category', 'brand', 'Availability', 'is_popular')
-    list_editable = ('offer_price', 'is_popular')
-    search_fields = ('name',)
+    form          = ProductAdminForm
+    list_display  = ('name', 'code', 'category', 'subcategory', 'child_category',
+                     'brand', 'price', 'previous_price', 'discount_badge',
+                     'quantity', 'Availability', 'is_popular', 'date')
+    list_filter   = ('category', 'subcategory', 'brand', 'concern',
+                     'Availability', 'is_popular')
+    list_editable = ('previous_price', 'is_popular')
+    search_fields = ('name', 'code', 'tags')
+    readonly_fields     = ('date',)
+    prepopulated_fields = {'slug': ('name',)}
+    inlines       = [ProductImageInline, ProductVariantInline]
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('name', 'slug', 'code')
+        }),
+        ('Classification', {
+            'fields': ('category', 'subcategory', 'child_category',
+                       'brand', 'concern')
+        }),
+        ('Pricing & Stock', {
+            'fields': ('price', 'previous_price', 'weight',
+                       'stock_option', 'quantity', 'Availability')
+        }),
+        ('Media', {
+            'fields': ('image', 'video_host', 'video_file', 'video_url')
+        }),
+        ('Content', {
+            'fields': ('bullet_points', 'tags', 'description',
+                       'ingredients', 'how_to_use')
+        }),
+        ('Flags', {
+            'fields': ('is_popular', 'date')
+        }),
+    )
 
     def discount_badge(self, obj):
         pct = obj.discount_percent
@@ -75,16 +169,11 @@ class CouponAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display    = ('id', 'product', 'user', 'price', 'quantity',
-                       'total', 'coupon', 'coupon_discount',
-                       'status_badge', 'date')
+                       'total', 'coupon', 'coupon_discount', 'status', 'date')
     list_editable   = ('status',)
     list_filter     = ('status', 'date')
     search_fields   = ('product', 'user__username', 'phone')
     readonly_fields = ('date',)
-
-    # override list_display to include status for list_editable
-    list_display = ('id', 'product', 'user', 'price', 'quantity',
-                    'total', 'coupon', 'coupon_discount', 'status', 'date')
 
     def status_badge(self, obj):
         colours = {
@@ -165,22 +254,39 @@ class LandingPageAdmin(admin.ModelAdmin):
 
 
 # ════════════════════════════════════════════════
-#  ATTRIBUTE
+#  ATTRIBUTE / ATTRIBUTE VALUE
 # ════════════════════════════════════════════════
 class AttributeValueInline(admin.TabularInline):
     model = AttributeValue
     extra = 2
+
 
 @admin.register(Attribute)
 class AttributeAdmin(admin.ModelAdmin):
     list_display = ('name',)
     inlines      = [AttributeValueInline]
 
+
 @admin.register(AttributeValue)
 class AttributeValueAdmin(admin.ModelAdmin):
     list_display  = ('attribute', 'value')
     list_filter   = ('attribute',)
     search_fields = ('value',)
+
+
+# ════════════════════════════════════════════════
+#  PRODUCT VARIANT (standalone view)
+# ════════════════════════════════════════════════
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display      = ('product', 'variant_values', 'sku', 'price', 'quantity')
+    list_filter       = ('product__category',)
+    search_fields     = ('product__name', 'sku')
+    filter_horizontal = ('values',)
+
+    def variant_values(self, obj):
+        return ", ".join(str(v.value) for v in obj.values.all()) or '—'
+    variant_values.short_description = 'Options'
 
 
 # ════════════════════════════════════════════════

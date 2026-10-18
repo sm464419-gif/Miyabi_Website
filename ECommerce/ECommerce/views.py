@@ -1,18 +1,66 @@
-from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
+import json
+from datetime import timedelta
+
+from django import forms
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, login, update_session_auth_hash
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib import messages
+from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, Sum
+from django.http import Http404, JsonResponse
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.utils import timezone
+from django.utils.text import slugify
+
 from cart.cart import Cart
-from django.contrib.admin.views.decorators import staff_member_required
 from app.models import (
-    Category, Product, UserCreateForm, Contact_us,
-    Order, Brand, Reel, PolicyPage, Review,
+    Category, Subcategory, ChildCategory, Concern, Brand,
+    Product, ProductImage, ProductVariant, Attribute, AttributeValue,
+    UserCreateForm, Contact_us, Order, Reel, PolicyPage, Review,
     UserProfile, SocialLink, Coupon
 )
-from django import forms
+
+
+# ════════════════════════════════════════════════
+#  SMALL HELPERS
+# ════════════════════════════════════════════════
+def _to_int(value, default=None):
+    """Safe int() for form values. Returns default when empty/invalid."""
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _variants_json(product):
+    """Variants of a product as JSON (used by edit form + detail page JS)."""
+    data = []
+    for v in product.variants.prefetch_related('values__attribute'):
+        data.append({
+            'id':       v.id,
+            'values':   [{'id': x.id, 'attribute': x.attribute.name, 'value': x.value}
+                         for x in v.values.all()],
+            'sku':      v.sku,
+            'price':    v.price if v.price is not None else product.price,
+            'quantity': v.quantity,
+            'image':    v.image.url if v.image else '',
+        })
+    return json.dumps(data)
+
+
+def _variant_groups(product):
+    """Group variant options by attribute, e.g. [{'name': 'Color', 'values': [...]}]."""
+    groups = {}
+    for v in product.variants.prefetch_related('values__attribute'):
+        for val in v.values.all():
+            groups.setdefault(val.attribute.name, {})[val.id] = val.value
+    return [
+        {'name': name, 'values': [{'id': i, 'value': n} for i, n in vals.items()]}
+        for name, vals in groups.items()
+    ]
 
 
 # ════════════════════════════════════════════════
@@ -29,10 +77,13 @@ def Index(request):
     category   = Category.objects.all()
     brand      = Brand.objects.all()
     brandID    = request.GET.get('brand')
-    categoryID = request.GET.get('category')
+    categoryID = request.GET.get('category')      # subcategory id (kept param name)
+    childID    = request.GET.get('child')         # NEW: child category id
 
-    if categoryID:
-        product = Product.objects.filter(Subcategory=categoryID).order_by('-id')
+    if childID:
+        product = Product.objects.filter(child_category=childID).order_by('-id')
+    elif categoryID:
+        product = Product.objects.filter(subcategory=categoryID).order_by('-id')
     elif brandID:
         product = Product.objects.filter(brand=brandID).order_by('-id')
     else:
@@ -250,19 +301,24 @@ def Your_Order(request):
 
 
 # ════════════════════════════════════════════════
-#  PRODUCTS
+#  PRODUCTS (storefront)
 # ════════════════════════════════════════════════
 def Product_page(request):
     category   = Category.objects.all()
     brand      = Brand.objects.all()
     brandID    = request.GET.get('brand')
-    categoryID = request.GET.get('category')
+    categoryID = request.GET.get('category')      # subcategory id (kept param name)
+    childID    = request.GET.get('child')         # NEW: child category id
     query      = request.GET.get('q', '').strip()
 
     if query:
-        product = Product.objects.filter(name__icontains=query).order_by('-id')
+        product = Product.objects.filter(
+            Q(name__icontains=query) | Q(tags__icontains=query)
+        ).order_by('-id')
+    elif childID:
+        product = Product.objects.filter(child_category=childID).order_by('-id')
     elif categoryID:
-        product = Product.objects.filter(Subcategory=categoryID).order_by('-id')
+        product = Product.objects.filter(subcategory=categoryID).order_by('-id')
     elif brandID:
         product = Product.objects.filter(brand=brandID).order_by('-id')
     else:
@@ -278,8 +334,17 @@ def Product_page(request):
 
 
 @login_required(login_url="/accounts/login/")
-def Product_detail(request, id):
-    product = get_object_or_404(Product, id=id)
+def Product_detail(request, slug=None, id=None):
+    # Works with both URL styles: /product/<slug>/ and the old /product/<id>
+    if slug:
+        product = Product.objects.filter(slug=slug).first()
+        # /product/3/ also matches the slug pattern, so fall back to the id
+        if product is None and slug.isdigit():
+            product = Product.objects.filter(id=int(slug)).first()
+        if product is None:
+            raise Http404('No Product matches the given query.')
+    else:
+        product = get_object_or_404(Product, id=id)
     reviews = product.reviews.all().order_by('-created')
 
     if request.method == 'POST':
@@ -292,14 +357,24 @@ def Product_detail(request, id):
                 rating=int(rating),
                 comment=comment,
             )
-        return redirect('product_detail', id=id)
+        return redirect(request.path)
 
     context = {
-        'product':  product,
-        'reviews':  reviews,
-        'products': Product.objects.filter(
-            category=product.category
-        ).exclude(id=id)[:6],
+        'product':        product,
+        'reviews':        reviews,
+        'gallery':        product.gallery.all(),
+        'variants':       product.variants.prefetch_related('values__attribute'),
+        'variant_groups': _variant_groups(product),
+        'variants_json':  _variants_json(product),
+        'category':       Category.objects.prefetch_related(
+                              'subcategory_set__child_categories'
+                          ),
+        'brands':         Brand.objects.all(),
+        'bullet_points':  product.bullet_points,
+        'tag_list':       product.tag_list,
+        'products':       Product.objects.filter(
+                              category=product.category
+                          ).exclude(pk=product.pk)[:6],
     }
     return render(request, 'product_detail.html', context)
 
@@ -413,11 +488,6 @@ def change_email(request):
 # ════════════════════════════════════════════════
 #  ADMIN DASHBOARD
 # ════════════════════════════════════════════════
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Sum, Count
-from django.utils import timezone
-import json
-
 @staff_member_required
 def admin_dashboard(request):
     today = timezone.now().date()
@@ -442,7 +512,7 @@ def admin_dashboard(request):
     total_products  = Product.objects.count()
 
     # ── Sales overview last 30 days ──
-    thirty_days_ago = today - timezone.timedelta(days=30)
+    thirty_days_ago = today - timedelta(days=30)
     sales_qs = (
         Order.objects
         .filter(date__gte=thirty_days_ago)
@@ -467,7 +537,6 @@ def admin_dashboard(request):
     popular_products = Product.objects.filter(is_popular=True)[:8]
 
     # ── Active coupons ──
-    from app.models import Coupon
     active_coupons = Coupon.objects.filter(is_active=True).order_by('-id')[:6]
 
     return render(request, 'admin_dashboard.html', {
@@ -500,9 +569,9 @@ def admin_orders(request):
         orders = orders.filter(status=status_filter)
     if search:
         orders = orders.filter(
-            models.Q(product__icontains=search) |
-            models.Q(user__username__icontains=search) |
-            models.Q(phone__icontains=search)
+            Q(product__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(phone__icontains=search)
         )
 
     # Handle status update via POST
@@ -523,3 +592,267 @@ def admin_orders(request):
         'status_choices': status_choices,
         'search':         search,
     })
+
+
+# ════════════════════════════════════════════════
+#  ADMIN: AJAX (chained dropdowns)
+# ════════════════════════════════════════════════
+@staff_member_required
+def load_subcategories(request):
+    """GET ?category=<id>  ->  [{'id':1,'name':'...'}, ...]"""
+    category_id = _to_int(request.GET.get('category'))
+    data = []
+    if category_id:
+        data = list(
+            Subcategory.objects.filter(category_id=category_id)
+            .order_by('name').values('id', 'name')
+        )
+    return JsonResponse(data, safe=False)
+
+
+@staff_member_required
+def load_child_categories(request):
+    """GET ?subcategory=<id>  ->  [{'id':1,'name':'...'}, ...]"""
+    sub_id = _to_int(request.GET.get('subcategory'))
+    data = []
+    if sub_id:
+        data = list(
+            ChildCategory.objects.filter(subcategory_id=sub_id)
+            .order_by('name').values('id', 'name')
+        )
+    return JsonResponse(data, safe=False)
+
+
+# ════════════════════════════════════════════════
+#  ADMIN: PRODUCT  (insert / edit / list / delete)
+# ════════════════════════════════════════════════
+def _save_product(request, product=None):
+    """
+    Create or update a Product from the Insert/Edit Product form.
+    Returns (product, error_message). error_message is None on success.
+
+    Form field names expected:
+      name, slug, code, category, subcategory, child_category, brand, concern,
+      price, previous_price, weight, stock_option, quantity,
+      image (file), gallery (multiple files), delete_gallery (ids, edit only),
+      video_host, video_file (file), video_url,
+      bullet_points (repeated text inputs), tags, description, ingredients,
+      how_to_use, is_popular (checkbox)
+
+      Variants - one block per row, where <n> comes from the hidden
+      repeated input "variant_rows":
+        variant_rows, variant_id_<n> (edit only), variant_values_<n> (comma
+        separated AttributeValue ids, e.g. "3,7"), variant_sku_<n>,
+        variant_price_<n>, variant_quantity_<n>, variant_image_<n> (file)
+    """
+    p, f   = request.POST, request.FILES
+    is_new = product is None
+
+    # ── Validation ──
+    name        = p.get('name', '').strip()
+    price       = _to_int(p.get('price'))
+    category_id = _to_int(p.get('category'))
+
+    if not name:
+        return None, 'Product name is required.'
+    if price is None:
+        return None, 'Price is required.'
+    if not category_id:
+        return None, 'Category is required.'
+    if is_new and not f.get('image'):
+        return None, 'Featured image is required.'
+
+    code = p.get('code', '').strip() or None
+    if code:
+        dup = Product.objects.filter(code=code)
+        if product:
+            dup = dup.exclude(pk=product.pk)
+        if dup.exists():
+            return None, f'Product code "{code}" already exists.'
+
+    slug = slugify(p.get('slug', '').strip()) or None
+    if slug:
+        dup = Product.objects.filter(slug=slug)
+        if product:
+            dup = dup.exclude(pk=product.pk)
+        if dup.exists():
+            return None, f'Slug "{slug}" is already used by another product.'
+
+    stock_option = p.get('stock_option', 'manual')
+    if stock_option not in dict(Product.STOCK_OPTION_CHOICES):
+        stock_option = 'manual'
+    video_host = p.get('video_host', 'local')
+    if video_host not in dict(Product.VIDEO_HOST_CHOICES):
+        video_host = 'local'
+
+    try:
+        with transaction.atomic():
+            if is_new:
+                product = Product()
+
+            # ── Basic info ──
+            product.name = name
+            product.slug = slug or product.slug
+            product.code = code or product.code
+
+            # ── Classification ──
+            product.category_id       = category_id
+            product.subcategory_id    = _to_int(p.get('subcategory'))
+            product.child_category_id = _to_int(p.get('child_category'))
+            product.brand_id          = _to_int(p.get('brand'))
+            product.concern_id        = _to_int(p.get('concern'))
+
+            # ── Pricing & stock ──
+            product.price          = price
+            product.previous_price = _to_int(p.get('previous_price'))
+            product.weight         = _to_int(p.get('weight'))
+            product.stock_option   = stock_option
+            product.quantity       = max(_to_int(p.get('quantity'), 0), 0)
+
+            # ── Media ──
+            if f.get('image'):
+                product.image = f['image']
+            product.video_host = video_host
+            if f.get('video_file'):
+                product.video_file = f['video_file']
+            product.video_url = p.get('video_url', '').strip()
+
+            # ── Content ──
+            product.bullet_points = [
+                b.strip() for b in p.getlist('bullet_points') if b.strip()
+            ]
+            product.tags = ', '.join(
+                t.strip() for t in p.get('tags', '').split(',') if t.strip()
+            )
+            product.description = p.get('description', '')
+            product.ingredients = p.get('ingredients', '')
+            product.how_to_use  = p.get('how_to_use', '')
+            product.is_popular  = 'is_popular' in p
+
+            product.save()
+
+            # ── Gallery images ──
+            delete_ids = [i for i in map(_to_int, p.getlist('delete_gallery')) if i]
+            if delete_ids:
+                ProductImage.objects.filter(product=product, id__in=delete_ids).delete()
+            for img in f.getlist('gallery'):
+                ProductImage.objects.create(product=product, image=img)
+
+            # ── Variants ──
+            kept_ids = []
+            for row in p.getlist('variant_rows'):
+                value_ids = [
+                    v for v in map(_to_int, p.get(f'variant_values_{row}', '').split(','))
+                    if v
+                ]
+                if not value_ids:
+                    continue
+
+                variant = None
+                variant_id = _to_int(p.get(f'variant_id_{row}'))
+                if variant_id:
+                    variant = ProductVariant.objects.filter(
+                        id=variant_id, product=product
+                    ).first()
+                if variant is None:
+                    variant = ProductVariant(product=product)
+
+                variant.sku      = p.get(f'variant_sku_{row}', '').strip()
+                variant.price    = _to_int(p.get(f'variant_price_{row}'))
+                variant.quantity = max(_to_int(p.get(f'variant_quantity_{row}'), 0), 0)
+                v_img = f.get(f'variant_image_{row}')
+                if v_img:
+                    variant.image = v_img
+                variant.save()
+                variant.values.set(AttributeValue.objects.filter(id__in=value_ids))
+                kept_ids.append(variant.id)
+
+            # remove variants that were deleted in the form
+            product.variants.exclude(id__in=kept_ids).delete()
+
+            # ── Availability follows stock ──
+            product.Availability = 'In Stock' if product.total_stock > 0 else 'Out of Stock'
+            product.save(update_fields=['Availability'])
+
+    except IntegrityError:
+        return None, 'Could not save: slug or product code already exists.'
+
+    return product, None
+
+
+def _product_form_context(request, product=None):
+    ctx = {
+        'product':          product,
+        'form_data':        request.POST if request.method == 'POST' else None,
+        'categories':       Category.objects.all(),
+        'brands':           Brand.objects.all(),
+        'concerns':         Concern.objects.all(),
+        'attributes':       Attribute.objects.prefetch_related('values'),
+        'stock_options':    Product.STOCK_OPTION_CHOICES,
+        'video_hosts':      Product.VIDEO_HOST_CHOICES,
+        'subcategories':    Subcategory.objects.none(),
+        'child_categories': ChildCategory.objects.none(),
+        'gallery':          [],
+        'variants_json':    '[]',
+    }
+    if product:
+        if product.category_id:
+            ctx['subcategories'] = Subcategory.objects.filter(category_id=product.category_id)
+        if product.subcategory_id:
+            ctx['child_categories'] = ChildCategory.objects.filter(
+                subcategory_id=product.subcategory_id
+            )
+        ctx['gallery']       = product.gallery.all()
+        ctx['variants_json'] = _variants_json(product)
+    return ctx
+
+
+@staff_member_required
+def admin_product_add(request):
+    if request.method == 'POST':
+        product, error = _save_product(request)
+        if error:
+            messages.error(request, error)
+        else:
+            messages.success(request, f'Product "{product.name}" added.')
+            return redirect('admin_product_list')
+    return render(request, 'admin_product_form.html', _product_form_context(request))
+
+
+@staff_member_required
+def admin_product_edit(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        saved, error = _save_product(request, product)
+        if error:
+            messages.error(request, error)
+        else:
+            messages.success(request, f'Product "{saved.name}" updated.')
+            return redirect('admin_product_list')
+    return render(request, 'admin_product_form.html', _product_form_context(request, product))
+
+
+@staff_member_required
+def admin_product_list(request):
+    query    = request.GET.get('q', '').strip()
+    products = Product.objects.select_related(
+        'category', 'subcategory', 'child_category', 'brand'
+    ).order_by('-id')
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | Q(code__icontains=query)
+        )
+    return render(request, 'admin_product_list.html', {
+        'products': products,
+        'query':    query,
+    })
+
+
+@staff_member_required
+def admin_product_delete(request, pk):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=pk)
+        name = product.name
+        product.delete()
+        messages.success(request, f'Product "{name}" deleted.')
+    return redirect('admin_product_list')

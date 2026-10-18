@@ -31,6 +31,16 @@ urlpatterns = [
     path('dashboard/',        views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/orders/', views.admin_orders,    name='admin_orders'),
 
+    # ── Custom admin: products (insert / edit / list / delete) ──
+    path('dashboard/products/',                  views.admin_product_list,   name='admin_product_list'),
+    path('dashboard/products/add/',              views.admin_product_add,    name='admin_product_add'),
+    path('dashboard/products/<int:pk>/edit/',    views.admin_product_edit,   name='admin_product_edit'),
+    path('dashboard/products/<int:pk>/delete/',  views.admin_product_delete, name='admin_product_delete'),
+
+    # ── AJAX: chained Category -> Sub Category -> Child Category dropdowns ──
+    path('ajax/subcategories/',     views.load_subcategories,     name='load_subcategories'),
+    path('ajax/child-categories/',  views.load_child_categories,  name='load_child_categories'),
+
     # ── Django built-in admin (keep for superuser raw access) ──
     # IMPORTANT: must come AFTER dashboard paths
     path('admin/', admin_redirect),           # ← redirects to dashboard
@@ -49,15 +59,21 @@ urlpatterns = [
 
     path('contact_us',        views.Contact_Page,    name='contact_page'),
     path('checkout/',         views.Checkout,        name='checkout'),
-    path('order/',            views.Your_Order,       name='order'),
+    path('order/',            views.Your_Order,      name='order'),
     path('product/',          views.Product_page,    name='product'),
-    path('product/<str:id>',  views.Product_detail,  name='product_detail'),
+
+    # Product detail: old id URL keeps working, new slug URL added.
+    # Both share the name 'product_detail' -> {% url 'product_detail' id=... %}
+    # and {% url 'product_detail' slug=... %} both reverse correctly.
+    path('product/<int:id>',       views.Product_detail, name='product_detail'),
+    path('product/<slug:slug>/',   views.Product_detail, name='product_detail'),
 
     path('about/',             views.about,             name='about'),
     path('privacy-policy/',    views.privacy_policy,    name='privacy_policy'),
     path('terms/',             views.terms,             name='terms'),
     path('shipping-delivery/', views.shipping_delivery, name='shipping_delivery'),
     path('refund-returns/',    views.refund_returns,    name='refund_returns'),
-                  path("pos/", include("pos.urls")),
+
+    path('pos/', include('pos.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

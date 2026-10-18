@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block body %}
-{% load static %}
+{% load static l10n %}
 <link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
 
 <section class="pd-page">
@@ -16,7 +16,7 @@
                         {% for cat in category %}
                         <div class="pd-accordion-item">
                             <div class="pd-accordion-head">
-                                {% if cat.subcategories.all %}
+                                {% if cat.subcategory_set.all %}
                                 <button type="button" class="pd-accordion-toggle"
                                         onclick="pdToggleAccordion(this)">
                                     <span>{{ cat.name }}</span>
@@ -26,12 +26,19 @@
                                 <a href="#" class="pd-accordion-link">{{ cat.name }}</a>
                                 {% endif %}
                             </div>
-                            {% if cat.subcategories.all %}
+                            {% if cat.subcategory_set.all %}
                             <div class="pd-accordion-body">
                                 <ul class="pd-subcat-list">
-                                    {% for subcategory in cat.subcategories.all %}
+                                    {% for subcategory in cat.subcategory_set.all %}
                                     <li>
                                         <a href="?category={{ subcategory.id }}">{{ subcategory.name }}</a>
+                                        {% if subcategory.child_categories.all %}
+                                        <ul class="pd-childcat-list">
+                                            {% for child in subcategory.child_categories.all %}
+                                            <li><a href="?child={{ child.id }}">{{ child.name }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
                                     </li>
                                     {% endfor %}
                                 </ul>
@@ -50,7 +57,7 @@
                         <li>
                             <a href="?brand={{ brand.id }}">
                                 <span>{{ brand.name }}</span>
-                                <span class="pd-brand-count">({{ brand.products.count }})</span>
+                                <span class="pd-brand-count">({{ brand.product_set.count }})</span>
                             </a>
                         </li>
                         {% endfor %}
@@ -78,84 +85,150 @@
 
                 <!-- ── PRODUCT DETAIL ── -->
                 <div class="pd-detail">
-                    <div class="pd-detail-image">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+
+                    <!-- GALLERY: featured image + gallery images + video -->
+                    <div class="pd-gallery">
+                        <div class="pd-gallery-main" id="pd-main-media">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        </div>
+
+                        <div class="pd-thumbs" id="pd-thumbs">
+                            <button type="button" class="pd-thumb pd-thumb-active"
+                                    data-type="image" data-src="{{ product.image.url }}">
+                                <img src="{{ product.image.url }}" alt="">
+                            </button>
+
+                            {% for g in gallery %}
+                            <button type="button" class="pd-thumb"
+                                    data-type="image" data-src="{{ g.image.url }}">
+                                <img src="{{ g.image.url }}" alt="">
+                            </button>
+                            {% endfor %}
+
+                            {% if product.video_host == 'local' and product.video_file %}
+                            <button type="button" class="pd-thumb pd-thumb-video"
+                                    data-type="file" data-src="{{ product.video_file.url }}"
+                                    title="Watch video">
+                                <i class="fa fa-play-circle"></i>
+                            </button>
+                            {% elif product.video_host != 'local' and product.video_url %}
+                            <button type="button" class="pd-thumb pd-thumb-video"
+                                    data-type="embed" data-src="{{ product.video_url }}"
+                                    title="Watch video">
+                                <i class="fa fa-play-circle"></i>
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
+
+                    <!-- INFO -->
                     <div class="pd-detail-info">
 
                         <h2 class="pd-product-name">{{ product.name }}</h2>
-                        <p class="pd-web-id">Web ID: {{ product.id }}</p>
+                        <p class="pd-web-id">Product Code: {{ product.code|default:product.id }}</p>
 
-                        <!-- FIX: offer price display -->
+                        <!-- Price (updates when a variant is picked) -->
                         <div class="pd-price-row">
-                            {% if product.offer_price %}
                             <div class="pd-price-group">
-                                <span class="pd-price-original">
-                                    <s>৳ {{ product.price }}</s>
+                                <span class="pd-price" id="pd-price-current">৳ {{ product.price }}</span>
+                                <span class="pd-price-original" id="pd-price-original"
+                                      {% if not product.discount_percent %}hidden{% endif %}>
+                                    <s>৳ {{ product.previous_price }}</s>
                                 </span>
-                                <span class="pd-price">৳ {{ product.offer_price }}</span>
-                                <span class="pd-discount-badge">
+                                <span class="pd-discount-badge" id="pd-discount-badge"
+                                      {% if not product.discount_percent %}hidden{% endif %}>
                                     {{ product.discount_percent }}% OFF
                                 </span>
                             </div>
-                            {% else %}
-                            <span class="pd-price">৳ {{ product.price }}</span>
-                            {% endif %}
+                        </div>
 
-                            <a href="{% url 'cart:cart_add' product.id %}" class="pd-btn pd-btn-cart">
+                        {% if bullet_points %}
+                        <ul class="pd-bullets">
+                            {% for point in bullet_points %}
+                            <li>{{ point }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+
+                        <!-- Variants: one group per attribute (Color, Size, ...) -->
+                        {% if variant_groups %}
+                        <div class="pd-variants" id="pd-variants">
+                            {% for group in variant_groups %}
+                            <div class="pd-variant-group" data-group="{{ group.name }}">
+                                <p class="pd-variant-label">
+                                    <b>{{ group.name }}:</b>
+                                    <span class="pd-variant-chosen">Select</span>
+                                </p>
+                                <div class="pd-variant-options">
+                                    {% for val in group.values %}
+                                    <button type="button" class="pd-variant-btn"
+                                            data-group="{{ group.name }}"
+                                            data-value-id="{{ val.id }}">{{ val.value }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            <p class="pd-variant-msg" id="pd-variant-msg" hidden>
+                                Please select all options before adding to cart.
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <div class="pd-actions">
+                            <a href="{% url 'cart:cart_add' product.id %}"
+                               id="pd-add-cart"
+                               data-base-href="{% url 'cart:cart_add' product.id %}"
+                               class="pd-btn pd-btn-cart{% if not variant_groups and product.total_stock <= 0 %} pd-btn-disabled{% endif %}">
                                 <i class="fa fa-shopping-cart"></i> Add to cart
                             </a>
                         </div>
 
                         <div class="pd-meta">
-                            <p><b>Availability:</b> {{ product.Availability }}</p>
-                            <p><b>Condition:</b> New</p>
-                            <p><b>Brand:</b> {{ product.brand.name }}</p>
-                            <p><b>Category:</b> {{ product.category.name }}</p>
-                            <p><b>Subcategory:</b> {{ product.subcategory.name }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── RECOMMENDED PRODUCTS ── -->
-                <div class="pd-recommended">
-                    <h2 class="pd-section-title">Recommended Items</h2>
-                    <div class="pd-recommended-grid">
-                        {% for item in products %}
-                        <div class="pd-rec-card">
-                            <div class="pd-rec-image">
-                                <img src="{{ item.image.url }}" alt="{{ item.name }}">
-                            </div>
-
-                            <!-- FIX: offer price in recommended items -->
-                            {% if item.offer_price %}
-                            <p class="pd-rec-original"><s>৳ {{ item.price }}</s></p>
-                            <h3 class="pd-rec-price">৳ {{ item.offer_price }}</h3>
-                            <span class="pd-rec-badge">{{ item.discount_percent }}% OFF</span>
-                            {% else %}
-                            <h3 class="pd-rec-price">৳ {{ item.price }}</h3>
+                            <p><b>Availability:</b>
+                                <span id="pd-stock">{% if product.total_stock > 0 %}In Stock{% else %}Out of Stock{% endif %}</span>
+                            </p>
+                            {% if variant_groups %}
+                            <p id="pd-sku-row" hidden><b>SKU:</b> <span id="pd-sku"></span></p>
                             {% endif %}
-
-                            <p class="pd-rec-name">{{ item.name }}</p>
-                            <a href="{% url 'cart:cart_add' item.id %}"
-                               class="pd-btn pd-btn-cart pd-btn-block">
-                                <i class="fa fa-shopping-cart"></i> Add to cart
-                            </a>
+                            <p><b>Condition:</b> New</p>
+                            {% if product.brand %}<p><b>Brand:</b> {{ product.brand.name }}</p>{% endif %}
+                            {% if product.category %}<p><b>Category:</b> {{ product.category.name }}</p>{% endif %}
+                            {% if product.subcategory %}<p><b>Subcategory:</b> {{ product.subcategory.name }}</p>{% endif %}
+                            {% if product.child_category %}<p><b>Child Category:</b> {{ product.child_category.name }}</p>{% endif %}
+                            {% if product.concern %}<p><b>Concern:</b> {{ product.concern.name }}</p>{% endif %}
+                            {% if product.weight %}<p><b>Weight:</b> {{ product.weight }} g</p>{% endif %}
                         </div>
-                        {% endfor %}
+
+                        {% if tag_list %}
+                        <div class="pd-tags">
+                            {% for tag in tag_list %}
+                            <span class="pd-tag">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- ── REVIEWS ── -->
+                <!-- ── DESCRIPTION / INGREDIENTS / HOW TO USE / REVIEWS ── -->
                 <div class="pd-reviews">
                     <div class="pd-tabs">
-                        <button type="button" class="pd-tab-btn pd-tab-active"
-                                data-tab="reviews"
+                        {% if product.description %}
+                        <button type="button" class="pd-tab-btn" data-tab="description"
+                                onclick="pdSwitchTab(this, 'description')">Description</button>
+                        {% endif %}
+                        {% if product.ingredients %}
+                        <button type="button" class="pd-tab-btn" data-tab="ingredients"
+                                onclick="pdSwitchTab(this, 'ingredients')">Ingredients</button>
+                        {% endif %}
+                        {% if product.how_to_use %}
+                        <button type="button" class="pd-tab-btn" data-tab="how-to-use"
+                                onclick="pdSwitchTab(this, 'how-to-use')">How To Use</button>
+                        {% endif %}
+                        <button type="button" class="pd-tab-btn" data-tab="reviews"
                                 onclick="pdSwitchTab(this, 'reviews')">
                             Reviews ({{ reviews|length }})
                         </button>
-                        <button type="button" class="pd-tab-btn"
-                                data-tab="write-review"
+                        <button type="button" class="pd-tab-btn" data-tab="write-review"
                                 onclick="pdSwitchTab(this, 'write-review')">
                             Write a Review
                         </button>
@@ -163,8 +236,26 @@
 
                     <div class="pd-tab-panels">
 
+                        {% if product.description %}
+                        <div class="pd-tab-panel" id="pd-tab-description">
+                            <div class="pd-richtext">{{ product.description|safe }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if product.ingredients %}
+                        <div class="pd-tab-panel" id="pd-tab-ingredients">
+                            <div class="pd-richtext">{{ product.ingredients|safe }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if product.how_to_use %}
+                        <div class="pd-tab-panel" id="pd-tab-how-to-use">
+                            <div class="pd-richtext">{{ product.how_to_use|safe }}</div>
+                        </div>
+                        {% endif %}
+
                         <!-- Existing reviews -->
-                        <div class="pd-tab-panel pd-tab-panel-active" id="pd-tab-reviews">
+                        <div class="pd-tab-panel" id="pd-tab-reviews">
                             {% if reviews %}
                                 {% for review in reviews %}
                                 <div class="pd-review">
@@ -233,56 +324,53 @@
                     </div>
                 </div>
 
+                <!-- ── RECOMMENDED PRODUCTS ── -->
+                <div class="pd-recommended">
+                    <h2 class="pd-section-title">Recommended Items</h2>
+                    <div class="pd-recommended-grid">
+                        {% for item in products %}
+                        <div class="pd-rec-card">
+                            <div class="pd-rec-image">
+                                {% if item.slug %}
+                                <a href="{% url 'product_detail' slug=item.slug %}">
+                                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                </a>
+                                {% else %}
+                                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                {% endif %}
+                            </div>
+
+                            {% if item.discount_percent %}
+                            <p class="pd-rec-original"><s>৳ {{ item.previous_price }}</s></p>
+                            <h3 class="pd-rec-price">৳ {{ item.price }}</h3>
+                            <span class="pd-rec-badge">{{ item.discount_percent }}% OFF</span>
+                            {% else %}
+                            <h3 class="pd-rec-price">৳ {{ item.price }}</h3>
+                            {% endif %}
+
+                            <p class="pd-rec-name">
+                                {% if item.slug %}
+                                <a href="{% url 'product_detail' slug=item.slug %}">{{ item.name }}</a>
+                                {% else %}
+                                {{ item.name }}
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'cart:cart_add' item.id %}"
+                               class="pd-btn pd-btn-cart pd-btn-block">
+                                <i class="fa fa-shopping-cart"></i> Add to cart
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </section>
 
-<style>
-/* ── Offer price styles for product detail ── */
-.pd-price-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.pd-price-original {
-    font-size: 16px;
-    color: #999;
-    text-decoration: line-through;
-}
-
-.pd-discount-badge {
-    background: #e74c3c;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-}
-
-/* ── Offer price in recommended cards ── */
-.pd-rec-original {
-    font-size: 12px;
-    color: #999;
-    margin: 4px 0 0;
-    text-decoration: line-through;
-}
-
-.pd-rec-badge {
-    display: inline-block;
-    background: #e74c3c;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-bottom: 4px;
-}
-</style>
-
 <script>
+/* ── Sidebar accordion ── */
 function pdToggleAccordion(btn) {
     var item   = btn.closest('.pd-accordion-item');
     var isOpen = item.classList.contains('pd-accordion-open');
@@ -298,6 +386,7 @@ function pdToggleAccordion(btn) {
     }
 }
 
+/* ── Tabs ── */
 function pdSwitchTab(btn, tabName) {
     document.querySelectorAll('.pd-tab-btn').forEach(function (b) {
         b.classList.remove('pd-tab-active');
@@ -309,6 +398,7 @@ function pdSwitchTab(btn, tabName) {
     document.getElementById('pd-tab-' + tabName).classList.add('pd-tab-panel-active');
 }
 
+/* ── Star rating ── */
 function pdSetRating(value) {
     document.getElementById('pd-rating-input').value = value;
     var stars = document.querySelectorAll('#pd-star-rating i');
@@ -316,6 +406,185 @@ function pdSetRating(value) {
         star.className = idx < value ? 'fa fa-star' : 'fa fa-star-o';
     });
 }
+
+/* ── Gallery + video ── */
+(function () {
+    var mainBox = document.getElementById('pd-main-media');
+    var thumbs  = document.getElementById('pd-thumbs');
+    var NAME    = "{{ product.name|escapejs }}";
+
+    function embedUrl(url) {
+        var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+        if (m) return 'https://www.youtube.com/embed/' + m[1];
+        m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+        if (m) return 'https://player.vimeo.com/video/' + m[1];
+        return '';
+    }
+
+    window.pdShowMedia = function (type, src) {
+        var el;
+        if (type === 'image') {
+            el = document.createElement('img');
+            el.src = src;
+            el.alt = NAME;
+        } else if (type === 'file') {
+            el = document.createElement('video');
+            el.src = src;
+            el.controls = true;
+            el.autoplay = true;
+            el.playsInline = true;
+        } else if (type === 'embed') {
+            var u = embedUrl(src);
+            if (!u) { window.open(src, '_blank'); return; }
+            el = document.createElement('iframe');
+            el.src = u;
+            el.allowFullscreen = true;
+            el.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+            el.setAttribute('title', 'Product video');
+        } else {
+            return;
+        }
+        mainBox.innerHTML = '';
+        mainBox.appendChild(el);
+    };
+
+    thumbs.addEventListener('click', function (e) {
+        var btn = e.target.closest('.pd-thumb');
+        if (!btn) return;
+        thumbs.querySelectorAll('.pd-thumb').forEach(function (t) {
+            t.classList.remove('pd-thumb-active');
+        });
+        btn.classList.add('pd-thumb-active');
+        pdShowMedia(btn.dataset.type, btn.dataset.src);
+    });
+})();
+
+/* ── Variants: price, stock, SKU, image and add-to-cart link ── */
+(function () {
+    var PD = {
+        price:    {{ product.price|unlocalize }},
+        prev:     {% if product.previous_price %}{{ product.previous_price|unlocalize }}{% else %}null{% endif %},
+        inStock:  {% if product.total_stock > 0 %}true{% else %}false{% endif %},
+        variants: {{ variants_json|safe }}
+    };
+    PD.hasVariants = PD.variants.length > 0;
+
+    var cartBtn   = document.getElementById('pd-add-cart');
+    var msgEl     = document.getElementById('pd-variant-msg');
+    var priceEl   = document.getElementById('pd-price-current');
+    var prevEl    = document.getElementById('pd-price-original');
+    var badgeEl   = document.getElementById('pd-discount-badge');
+    var stockEl   = document.getElementById('pd-stock');
+    var skuRow    = document.getElementById('pd-sku-row');
+    var skuEl     = document.getElementById('pd-sku');
+    var baseHref  = cartBtn.getAttribute('data-base-href');
+    var initialStock = stockEl.textContent;
+    var buttons   = Array.prototype.slice.call(document.querySelectorAll('.pd-variant-btn'));
+
+    var selected    = {};     // attribute name -> AttributeValue id
+    var lastClicked = null;
+
+    function fmt(n) { return '৳ ' + n; }
+
+    // Best variant whose option ids are all selected (largest match wins;
+    // on a tie, prefer the one containing the most recently clicked option).
+    function currentVariant() {
+        var ids  = Object.keys(selected).map(function (k) { return selected[k]; });
+        var best = null;
+        PD.variants.forEach(function (v) {
+            var vids = v.values.map(function (x) { return x.id; });
+            if (!vids.length) return;
+            var ok = vids.every(function (id) { return ids.indexOf(id) !== -1; });
+            if (!ok) return;
+            if (!best || vids.length > best.vids.length ||
+                (vids.length === best.vids.length && vids.indexOf(lastClicked) !== -1)) {
+                best = { v: v, vids: vids };
+            }
+        });
+        return best ? best.v : null;
+    }
+
+    function render() {
+        var v = currentVariant();
+
+        // option buttons + "chosen" labels
+        buttons.forEach(function (b) {
+            var on = selected[b.dataset.group] === parseInt(b.dataset.valueId, 10);
+            b.classList.toggle('pd-variant-btn-active', on);
+        });
+        document.querySelectorAll('.pd-variant-group').forEach(function (g) {
+            var active = g.querySelector('.pd-variant-btn-active');
+            g.querySelector('.pd-variant-chosen').textContent = active ? active.textContent : 'Select';
+        });
+
+        // price
+        var price = v ? v.price : PD.price;
+        priceEl.textContent = fmt(price);
+        var showPrev = PD.prev && PD.prev > price;
+        if (prevEl)  { prevEl.hidden  = !showPrev; if (showPrev) prevEl.innerHTML = '<s>' + fmt(PD.prev) + '</s>'; }
+        if (badgeEl) { badgeEl.hidden = !showPrev; if (showPrev) badgeEl.textContent = Math.round((PD.prev - price) / PD.prev * 100) + '% OFF'; }
+
+        // stock + sku
+        if (PD.hasVariants && v) {
+            stockEl.textContent = v.quantity > 0 ? 'In Stock (' + v.quantity + ' available)' : 'Out of Stock';
+            if (skuRow) { skuRow.hidden = !v.sku; if (skuEl) skuEl.textContent = v.sku; }
+        } else {
+            stockEl.textContent = initialStock;
+            if (skuRow) skuRow.hidden = true;
+        }
+
+        // variant image
+        if (v && v.image) {
+            pdShowMedia('image', v.image);
+            document.querySelectorAll('#pd-thumbs .pd-thumb').forEach(function (t) {
+                t.classList.remove('pd-thumb-active');
+            });
+        }
+
+        // add-to-cart state + link (passes ?variant=<id>)
+        var blocked = false;
+        if (PD.hasVariants) {
+            if (!v) blocked = true;
+            else if (v.quantity <= 0) blocked = true;
+        } else if (!PD.inStock) {
+            blocked = true;
+        }
+        cartBtn.classList.toggle('pd-btn-disabled', blocked);
+        cartBtn.href = v ? baseHref + '?variant=' + v.id : baseHref;
+        if (msgEl && v) msgEl.hidden = true;
+    }
+
+    buttons.forEach(function (b) {
+        b.addEventListener('click', function () {
+            var group = b.dataset.group;
+            var id    = parseInt(b.dataset.valueId, 10);
+            if (selected[group] === id) {
+                delete selected[group];
+            } else {
+                selected[group] = id;
+                lastClicked = id;
+            }
+            render();
+        });
+    });
+
+    cartBtn.addEventListener('click', function (e) {
+        if (cartBtn.classList.contains('pd-btn-disabled')) {
+            e.preventDefault();
+            if (PD.hasVariants && !currentVariant() && msgEl) msgEl.hidden = false;
+        }
+    });
+
+    if (PD.hasVariants) {
+        cartBtn.classList.add('pd-btn-disabled');   // must pick options first
+    }
+})();
+
+/* ── Open the first available tab ── */
+(function () {
+    var first = document.querySelector('.pd-tab-btn');
+    if (first) first.click();
+})();
 </script>
 
 {% endblock %}
