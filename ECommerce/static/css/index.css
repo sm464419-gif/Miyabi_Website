@@ -402,38 +402,25 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
     transition: box-shadow 0.2s;
 }
 
-/* ── Old price with a red cross (X) through it ──
+/* ── Old price shown below the offer price, with a straight line through it ──
    Selectors are scoped to .pop-card / .productinfo so they beat
    the generic ".pop-card p" and ".productinfo p" rules above. */
 .pop-card .original-price,
 .productinfo .original-price,
 .original-price {
-    margin: 4px 0 2px;
+    margin: 0 0 8px;
     font-size: 14px;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
 }
 .old-price {
-    position: relative;
-    display: inline-block;
-    padding: 0 6px;
-    color: #999;
+    color: #7B2CBF;                         /* purple text */
     font-weight: 500;
+    text-decoration: line-through;          /* straight line through the middle */
+    text-decoration-color: #000;            /* black line */
+    text-decoration-thickness: 2px;
 }
-.old-price::before,
-.old-price::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 2px;
-    background: #e53935;
-    border-radius: 2px;
-}
-.old-price::before { transform: translateY(-50%) rotate(12deg); }
-.old-price::after  { transform: translateY(-50%) rotate(-12deg); }
 
 /* Discount badge — top right of card */
 .offer-badge {
@@ -489,7 +476,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
     .productinfo img { height: 150px; }
     .productinfo h2  { font-size: 15px; margin: 7px 0 3px; }
     .productinfo p   { font-size: 12px; line-height: 1.4; margin-bottom: 8px; }
-    .productinfo .original-price { font-size: 12px; margin: 4px 0 2px; }
+    .productinfo .original-price { font-size: 12px; margin: 0 0 6px; }
     .productinfo .add-to-cart { font-size: 11px; padding: 7px 8px; width: 100%; }
     .category-products { display: block; }
     .miy-container   { padding: 0 10px; }
