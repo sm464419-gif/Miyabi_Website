@@ -44,16 +44,16 @@
                     <div class="pop-card">
                         <span class="pop-badge">&#9733; Popular</span>
 
-                        {% if prod.offer_price %}
+                        {% if prod.previous_price and prod.previous_price > prod.price %}
                         <span class="offer-badge">{{ prod.discount_percent }}% OFF</span>
                         {% endif %}
 
                         <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
 
                         <!-- Show crossed-out old price + offer price -->
-                        {% if prod.offer_price %}
-                        <p class="original-price"><span class="old-price">৳{{ prod.price }}</span></p>
-                        <h2>৳{{ prod.offer_price }}</h2>
+                        {% if prod.previous_price and prod.previous_price > prod.price %}
+                        <h2>৳{{ prod.price }}</h2>
+                        <p class="original-price"><span class="old-price">৳{{ prod.previous_price }}</span></p>
                         {% else %}
                         <h2>৳{{ prod.price }}</h2>
                         {% endif %}
@@ -164,16 +164,16 @@
                     <div class="product-image-wrapper">
                         <div class="productinfo">
 
-                            {% if prod.offer_price %}
+                            {% if prod.previous_price and prod.previous_price > prod.price %}
                             <span class="offer-badge">{{ prod.discount_percent }}% OFF</span>
                             {% endif %}
 
                             <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
 
                             <!-- Show crossed-out old price + offer price -->
-                            {% if prod.offer_price %}
-                            <p class="original-price"><span class="old-price">৳{{ prod.price }}</span></p>
-                            <h2>৳{{ prod.offer_price }}</h2>
+                            {% if prod.previous_price and prod.previous_price > prod.price %}
+                            <h2>৳{{ prod.price }}</h2>
+                            <p class="original-price"><span class="old-price">৳{{ prod.previous_price }}</span></p>
                             {% else %}
                             <h2>৳{{ prod.price }}</h2>
                             {% endif %}
