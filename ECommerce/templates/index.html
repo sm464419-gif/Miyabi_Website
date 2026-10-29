@@ -50,9 +50,9 @@
 
                         <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
 
-                        <!-- FIX: show offer price if available -->
+                        <!-- Show crossed-out old price + offer price -->
                         {% if prod.offer_price %}
-                        <p class="original-price"><s>৳{{ prod.price }}</s></p>
+                        <p class="original-price"><span class="old-price">৳{{ prod.price }}</span></p>
                         <h2>৳{{ prod.offer_price }}</h2>
                         {% else %}
                         <h2>৳{{ prod.price }}</h2>
@@ -170,9 +170,9 @@
 
                             <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
 
-                            <!-- FIX: show offer price if available -->
+                            <!-- Show crossed-out old price + offer price -->
                             {% if prod.offer_price %}
-                            <p class="original-price"><s>৳{{ prod.price }}</s></p>
+                            <p class="original-price"><span class="old-price">৳{{ prod.price }}</span></p>
                             <h2>৳{{ prod.offer_price }}</h2>
                             {% else %}
                             <h2>৳{{ prod.price }}</h2>
