@@ -2,7 +2,35 @@
 {% load static %}
 
 {% block extra_css %}
-<link href="{% static 'css/index.css' %}" rel="stylesheet">
+<link href="{% static 'css/index.css' %}?v=3" rel="stylesheet">
+<style>
+/* Price + discount styling (inline so it works even if the static CSS is stale) */
+.offer-badge {
+    display: inline-block;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
+.pop-card .original-price,
+.productinfo .original-price {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+}
+.old-price {
+    color: #7B2CBF;
+    font-weight: 500;
+    text-decoration: line-through;
+    text-decoration-color: #000;
+    text-decoration-thickness: 2px;
+}
+</style>
 {% endblock %}
 
 
