@@ -465,14 +465,10 @@ class UserProfile(models.Model):
 
 # ── Auto-create / auto-save profile when User is created ──
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+
+def create_user_profile(sender, instance, created, raw=False, **kwargs):
+    if raw:
+        return
+
     if created:
         UserProfile.objects.get_or_create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    try:
-        instance.profile.save()
-    except UserProfile.DoesNotExist:
-        UserProfile.objects.create(user=instance)

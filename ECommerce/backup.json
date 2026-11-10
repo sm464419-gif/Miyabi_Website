@@ -1,0 +1,148 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$F59Kv2X3jneAlti0Nx5fuh$Hoej0wJPQias/h34XVEwFpi4ACNpjJlji+vuGkj9td0=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "Admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-06-25T08:35:35.223Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$4kosDvpyxepILdKYL9zzNg$IPsKXFGSR3rn1grV+c5uWxGBcMuzlz0XQlm8xnkjSFM=",
+    "last_login": "2026-10-29T10:01:20.209Z",
+    "is_superuser": true,
+    "username": "Admin12345",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin2@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-06-25T18:40:48.928Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "3xmqd0bmirp4007zl7c1rewnwlu6bbab",
+  "fields": {
+    "session_data": ".eJxVjsFqwzAQRH_F7Nk4thQ5lm9tCj0VCv2AsFptbKWynMoyNIT8e1GaQ3sZ2Jnh7VzhgGsaD-vC8eAs9CCg_OsZpE8OObAnDMNc0RxSdKbKleqRLtXbbNk_P7r_ACMuI_Qgm467VmklURhVC2V0U2tSQitjJcsjadlZoUkhG2NpZ47b3RbrutXUbncdlEAYE_RXkFkyO-8VJZzjbFdK9_myhIATQw_7eYnfxQd6RxfvqHgiZ4sXdP5SvHJI6Iu9ZwwLx6JR9eShhK8VQ3Lpcseco6PMaURbQwluwiGfm4mtww3TPLkwbN5_fzfV6cwD3G63HwxvbX4:1xG8uQ:Vx-daKjCwOJCs8BrcasOkfI3rpFwKIVbKUcafogdcdc",
+    "expire_date": "2026-10-26T05:49:14.438Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "6robk7oot0hohgl6s0wnbkey6kfkngg5",
+  "fields": {
+    "session_data": ".eJxVjjFvgzAQhf8Kupk4tgkQ2NJUqjp06tDROs4GnBpDwUhFUf575YqhXU569z19endQuIZerYuZldVQg4T0769B-jQ-An1D342MRh9m27BYYTtd2NuojXvau_8EPS491NCYDNus5JpLKmTVCplVhJlGUWEuTiZrS65PZ56VJyqaM-embag8GyQpsWxbSIFwDlDfQcQT3XGvTGGaR71S-J0vUvA4GKjhOi7zd_KOztLmLCUXsjp5Ruu25MX4gC65OoN-MXMicj44SOFrRR9s2HarpegRknNIwQ7YxXg0NA7Wd8ePHsNymSb1GomSXBYHnh-4VBiUKFhesbxkt8l08Hg8fgDCD3Pk:1wdMrY:RwqRE1FK-2ngmC_ag1f84UPz9dcRHdl_fmddn-xVoSo",
+    "expire_date": "2026-07-11T06:50:00.940Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "dmsr10ag74xklpji0f92x90lmgf7wnno",
+  "fields": {
+    "session_data": ".eJxVjs1qwzAQhF_F7Nn4R4ocy7c0hZ4KhT5AWK02tlJZTm0ZGoLfvajNob0M7Mzw7dzhhGscTuvC88lZ6EBA_tczSB8cUmAvGPqpoCnE2ZkiVYpHuhSvk2X_9Oj-Awy4DNCBrFtuG6WVRGFUJZTRdaVJCa2MlSzPpGVrhSaFbIylvTnv9jusqkZTs9u3kAPhHKG7g0yS2GmvyOE6T3al-DNf5hBwZOjgOC3zV_aO3tHNO8oO5Gz2jM7fshcOEX129Ixh4TmrVTV6yOFzxRBdvEFXJ6qjxKlFU0EObsQ-neXI1mHJNI0u9OXb7--6uFy5h23bvgEL-218:1x96JE:QFkk5hlbO0_BQerc3HGK39zxxVIWnF2kDEUydSdmmQM",
+    "expire_date": "2026-10-06T19:37:44.440Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "duat5mhc4nmduputfakyfxauyaxvb73o",
+  "fields": {
+    "session_data": ".eJxVjDkOgzAQAP-yNbJ8sD4o0_MGtF7bMUkEEkeF-HuERJG0M6M5YKB9q8O-5mUYE3Sgofllkfidp0ukF03PWfA8bcsYxZWI266in1P-PO72b1BprdABOqkkGooKjTTaB-uVDzIZctrYlqXE1rYZbUklcMnoMISotOOSirYMDTAtG3THeX4Byl86CQ:1xMN7h:Elr_PCZl6B5-OfuctCYde-6moc3_t9wdATHseyTjGAk",
+    "expire_date": "2026-11-12T10:12:41.787Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "ho8yk7es8xdb6lp14b0d5qu7cxa2ji1w",
+  "fields": {
+    "session_data": ".eJxVjDkOgzAQAP-yNbJ8sD4o0_MGtF7bMUkEEkeF-HuERJG0M6M5YKB9q8O-5mUYE3Sgofllkfidp0ukF03PWfA8bcsYxZWI266in1P-PO72b1BprdABOqkkGooKjTTaB-uVDzIZctrYlqXE1rYZbUklcMnoMISotOOSirYMDTAtG3THeX4Byl86CQ:1xKH1Z:3GiVSGBgnXO4xhKKynZ6ONLCf0aGufyGrtKkTlCEToU",
+    "expire_date": "2026-11-06T15:17:41.496Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 1,
+  "fields": {
+    "name": "Health Beauty"
+  }
+},
+{
+  "model": "app.subcategory",
+  "pk": 1,
+  "fields": {
+    "name": "Serrum Essence",
+    "category": 1
+  }
+},
+{
+  "model": "app.brand",
+  "pk": 1,
+  "fields": {
+    "name": "COSRX"
+  }
+},
+{
+  "model": "app.product",
+  "pk": 7,
+  "fields": {
+    "name": "Facewash",
+    "slug": "facewash",
+    "code": "430701",
+    "category": 1,
+    "subcategory": 1,
+    "child_category": null,
+    "brand": 1,
+    "concern": null,
+    "price": 1180,
+    "previous_price": 1390,
+    "weight": 68,
+    "stock_option": "manual",
+    "quantity": 0,
+    "Availability": "In Stock",
+    "image": "ecoming/bd6800a4-9ab1-49a5-b966-c88ca523cd60.jpg",
+    "video_host": "local",
+    "video_file": "",
+    "video_url": "",
+    "bullet_points": [],
+    "tags": "",
+    "description": "mmmmmmmmmmmmmmmmmmmm",
+    "ingredients": "mnjfjtrnnnnnnnnnnnnnnnn",
+    "how_to_use": "fmmmmmmmmmmmmmmmmm",
+    "date": "2026-10-29",
+    "is_popular": false
+  }
+},
+{
+  "model": "app.productimage",
+  "pk": 2,
+  "fields": {
+    "product": 7,
+    "image": "products/gallery/bd6800a4-9ab1-49a5-b966-c88ca523cd60.jpg"
+  }
+},
+{
+  "model": "app.userprofile",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "Admin12345"
+    ],
+    "phone": "",
+    "picture": ""
+  }
+}
+]
