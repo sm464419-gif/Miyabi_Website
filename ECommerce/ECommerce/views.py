@@ -236,13 +236,15 @@ def Contact_Page(request):
 @login_required(login_url="/accounts/login/")
 def Checkout(request):
     if request.method == "POST":
+        cart = request.session.get('cart') or {}
+        if not cart:
+            messages.error(request, 'Your cart is empty.')
+            return redirect('cart:cart_detail')
+
         address = request.POST.get('address')
         phone   = request.POST.get('phone')
         pincode = request.POST.get('pincode')
-
-        cart = request.session.get('cart')
-        uid  = request.session.get('_auth_user_id')
-        user = User.objects.get(pk=uid)
+        user    = request.user
 
         # Resolve coupon if applied
         coupon          = None
@@ -252,31 +254,25 @@ def Checkout(request):
             try:
                 coupon          = Coupon.objects.get(code=coupon_code, is_active=True)
                 coupon_discount = float(request.session.get('coupon_discount', 0))
-                # Increment usage count
                 coupon.used_count += 1
                 coupon.save()
             except Coupon.DoesNotExist:
                 coupon = None
 
-        for i in cart:
-            a     = int(cart[i]['price'])
-            b     = cart[i]['quantity']
-            total = a * b
-
-            order = Order(
+        for item in cart.values():
+            Order.objects.create(
                 user=user,
-                product=cart[i]['name'],
-                price=cart[i]['price'],
-                quantity=cart[i]['quantity'],
-                image=cart[i]['image'],
+                product=item['name'],
+                price=item['price'],
+                quantity=item['quantity'],
+                image=item['image'],
                 address=address,
                 phone=phone,
                 pincode=pincode,
-                total=total,
+                total=int(item['price']) * item['quantity'],
                 coupon=coupon,
                 coupon_discount=coupon_discount,
             )
-            order.save()
 
         # Clear cart and coupon from session
         request.session['cart'] = {}
@@ -286,7 +282,6 @@ def Checkout(request):
         return redirect('index')
 
     return HttpResponse("this is checkout page")
-
 
 # ════════════════════════════════════════════════
 #  ORDERS

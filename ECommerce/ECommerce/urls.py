@@ -4,6 +4,7 @@ from django.conf import settings
 from django.views.static import serve
 from django.shortcuts import redirect
 from . import views
+#me
 
 
 # ── Redirect /admin/ to custom dashboard for staff ──
