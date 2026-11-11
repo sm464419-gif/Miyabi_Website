@@ -14,8 +14,7 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.utils import timezone
 from django.utils.text import slugify
-
-from cart.cart import Cart
+from .cart_session import Cart
 from app.models import (
     Category, Subcategory, ChildCategory, Concern, Brand,
     Product, ProductImage, ProductVariant, Attribute, AttributeValue,
