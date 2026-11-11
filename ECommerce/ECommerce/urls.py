@@ -3,7 +3,7 @@ from os import stat
 from django.contrib import admin
 from django.urls import path, re_path, include
 from django.conf import settings
-from django.views.static import serve
+from django.conf.urls.static import static
 from django.shortcuts import redirect
 from . import views
 #me
@@ -82,6 +82,6 @@ urlpatterns = [
     # ── Uploaded media (product images, reels) ──
     # django.conf.urls.static.static() does nothing when DEBUG=False (Render),
     # so media is served explicitly here.
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 
-]
+
+]+static(settings.MEDIA_URL, document_root= settings.MEDIA_ROOT)
