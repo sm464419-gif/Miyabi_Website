@@ -1,0 +1,180 @@
+/* ═══════════════════════════════════════
+   contact.css — Miyabi Contact Page
+   No Bootstrap. No external dependencies.
+═══════════════════════════════════════ */
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: 'Roboto', Arial, sans-serif; background: #f5f5f5; }
+a { text-decoration: none; color: inherit; }
+button, input[type="submit"] { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+
+/* ── PAGE WRAPPER ── */
+.contact-page {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 15px;
+    box-sizing: border-box;
+}
+
+/* ── PAGE TITLE ── */
+.page-title {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+    color: #7B2CBF;
+}
+.page-title strong { color: #333; }
+
+/* ── RESPONSIVE MAP ── */
+.map-responsive {
+    position: relative;
+    overflow: hidden;
+    padding-top: 40%;   /* 2.5:1 ratio on desktop */
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+.map-responsive iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+}
+
+/* ── TWO-COLUMN LAYOUT ── */
+.contact-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+/* ── BOXES ── */
+.contact-form-box,
+.contact-info-box {
+    background: #fff;
+    padding: 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 1.3rem;
+    margin: 0 0 18px;
+    color: #7B2CBF;
+}
+
+/* ── FORM GRID ── */
+.contact-grid-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+.field-full { grid-column: 1 / -1; }
+
+/* ── INPUTS ── */
+.input-field,
+.textarea-field {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    font-size: 16px;   /* prevents iPhone auto-zoom */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+}
+.textarea-field {
+    resize: vertical;
+    min-height: 140px;
+}
+.input-field:focus,
+.textarea-field:focus {
+    border-color: #7B2CBF;
+    box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.15);
+}
+
+/* ── SUBMIT ROW ── */
+.submit-row { text-align: right; margin-top: 6px; }
+.contact-submit-btn {
+    padding: 10px 28px;
+    background: #7B2CBF;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+.contact-submit-btn:hover { background: #6420a0; }
+
+/* ── STATUS MESSAGE (shown via JS after submit) ── */
+.status-msg {
+    display: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    font-size: .9rem;
+}
+.status-msg.success { background: #dff0d8; color: #3c763d; display: block; }
+.status-msg.error   { background: #f2dede; color: #a94442; display: block; }
+
+/* ── ADDRESS ── */
+address {
+    font-style: normal;
+    line-height: 1.6;
+    margin: 0 0 20px;
+    color: #444;
+}
+address p { margin: 0 0 6px; }
+
+/* ── SOCIAL LIST ── */
+.social-list {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.social-list a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f3eaff;
+    color: #7B2CBF;
+    font-size: 16px;
+    transition: background .2s, color .2s;
+}
+.social-list a:hover { background: #7B2CBF; color: #fff; }
+
+/* ════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+════════════════════════════════ */
+
+/* Tablet — stack form above info */
+@media (max-width: 900px) {
+    .contact-layout { grid-template-columns: 1fr; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .contact-page           { padding: 20px 12px; }
+    .page-title             { font-size: 1.4rem; }
+    .contact-form-box,
+    .contact-info-box       { padding: 18px; }
+    .contact-grid-fields    { grid-template-columns: 1fr; }
+    .submit-row             { text-align: center; }
+    .contact-submit-btn     { width: 100%; }
+    .map-responsive         { padding-top: 75%; }  /* taller map on small screens */
+}

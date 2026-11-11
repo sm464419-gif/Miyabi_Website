@@ -1,0 +1,174 @@
+/* =========================================================
+   Edit Profile Form — custom CSS (no Bootstrap)
+   ========================================================= */
+
+:root {
+  --edit-purple: #7B2CBF;
+  --edit-purple-dark: #5a189a;
+  --edit-border: #ddd;
+  --edit-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.edit-page {
+  font-family: var(--edit-font);
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+.edit-page__title {
+  color: var(--edit-purple);
+  margin: 0 0 24px;
+  font-size: 22px;
+}
+
+/* ---------- Form layout ---------- */
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-form__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-form__label {
+  color: var(--edit-purple);
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.edit-form__error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+/* ---------- Raw Django widget styling ----------
+   {{ field }} renders <input>/<select>/<textarea> with no classes,
+   so style them generically inside the form. */
+
+.edit-form input[type="text"],
+.edit-form input[type="email"],
+.edit-form input[type="tel"],
+.edit-form input[type="number"],
+.edit-form input[type="password"],
+.edit-form input[type="date"],
+.edit-form select,
+.edit-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--edit-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+}
+
+.edit-form input[type="text"]:focus,
+.edit-form input[type="email"]:focus,
+.edit-form input[type="tel"]:focus,
+.edit-form input[type="number"]:focus,
+.edit-form input[type="password"]:focus,
+.edit-form input[type="date"]:focus,
+.edit-form select:focus,
+.edit-form textarea:focus {
+  outline: none;
+  border-color: var(--edit-purple);
+}
+
+.edit-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.edit-form input[type="file"] {
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.edit-form input[type="checkbox"],
+.edit-form input[type="radio"] {
+  width: auto;
+  accent-color: var(--edit-purple);
+  margin-right: 6px;
+}
+
+/* ---------- Submit / cancel ---------- */
+
+.edit-form__submit {
+  background: var(--edit-purple);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.edit-form__submit:hover {
+  background: var(--edit-purple-dark);
+}
+
+.edit-form__cancel {
+  text-align: center;
+  color: var(--edit-purple);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.edit-form__cancel:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   Responsive breakpoints
+   ========================================================= */
+
+@media (max-width: 560px) {
+  .edit-page {
+    padding: 28px 14px;
+  }
+
+  .edit-page__title {
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+
+  .edit-form {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .edit-page {
+    padding: 22px 12px;
+  }
+
+  .edit-page__title {
+    font-size: 18px;
+  }
+
+  .edit-form input[type="text"],
+  .edit-form input[type="email"],
+  .edit-form input[type="tel"],
+  .edit-form input[type="number"],
+  .edit-form input[type="password"],
+  .edit-form input[type="date"],
+  .edit-form select,
+  .edit-form textarea {
+    font-size: 13.5px;
+    padding: 9px 10px;
+  }
+}

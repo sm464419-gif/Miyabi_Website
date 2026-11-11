@@ -12,6 +12,12 @@
     --mi-border: #eee;
     --mi-star: #f5a623;
     --mi-star-off: #ccc;
+    --mi-sale: #e74c3c;
+}
+
+/* Elements toggled with the [hidden] attribute by JS */
+.pd-page [hidden] {
+    display: none !important;
 }
 
 /* ---------- Page / container ---------- */
@@ -113,6 +119,22 @@
     color: var(--mi-purple);
 }
 
+/* Child categories (nested under a subcategory) */
+.pd-childcat-list {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0 0 0 14px;
+    border-left: 2px solid var(--mi-border);
+}
+
+.pd-childcat-list li + li {
+    margin-top: 6px;
+}
+
+.pd-childcat-list a {
+    font-size: 13px;
+}
+
 /* Brands */
 .pd-brand-list {
     list-style: none;
@@ -181,17 +203,85 @@
 /* ---------- Product detail ---------- */
 .pd-detail {
     display: grid;
-    grid-template-columns: minmax(0, 380px) 1fr;
+    grid-template-columns: minmax(0, 420px) 1fr;
     gap: 30px;
 }
 
-.pd-detail-image img {
-    width: 100%;
-    display: block;
-    border-radius: 6px;
-    border: 1px solid var(--mi-border);
+/* ---------- Gallery ---------- */
+.pd-gallery {
+    min-width: 0;
 }
 
+.pd-gallery-main {
+    border: 1px solid var(--mi-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pd-gallery-main img {
+    width: 100%;
+    display: block;
+}
+
+.pd-gallery-main video,
+.pd-gallery-main iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    display: block;
+    background: #000;
+}
+
+.pd-thumbs {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.pd-thumb {
+    flex: 0 0 auto;
+    width: 68px;
+    height: 68px;
+    padding: 0;
+    border: 2px solid var(--mi-border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.pd-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pd-thumb:hover {
+    border-color: #cdb0e6;
+}
+
+.pd-thumb-active {
+    border-color: var(--mi-purple);
+}
+
+.pd-thumb-video {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1d1d1d;
+    color: #fff;
+    font-size: 30px;
+}
+
+/* ---------- Info ---------- */
 .pd-product-name {
     margin: 0 0 6px;
     font-size: 24px;
@@ -212,16 +302,141 @@
     margin-bottom: 18px;
 }
 
+.pd-price-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .pd-price {
     font-size: 28px;
     font-weight: 700;
     color: var(--mi-purple);
 }
 
+.pd-price-original {
+    font-size: 16px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.pd-discount-badge {
+    background: var(--mi-sale);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* Bullet points */
+.pd-bullets {
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+}
+
+.pd-bullets li {
+    position: relative;
+    padding-left: 22px;
+    margin: 6px 0;
+    font-size: 14px;
+    color: var(--mi-text);
+}
+
+.pd-bullets li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--mi-purple);
+    font-weight: 700;
+}
+
+/* Variants */
+.pd-variants {
+    margin-bottom: 18px;
+}
+
+.pd-variant-group + .pd-variant-group {
+    margin-top: 14px;
+}
+
+.pd-variant-label {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--mi-text);
+}
+
+.pd-variant-chosen {
+    color: var(--mi-muted);
+    margin-left: 4px;
+}
+
+.pd-variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pd-variant-btn {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mi-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pd-variant-btn:hover {
+    border-color: var(--mi-purple);
+    color: var(--mi-purple);
+}
+
+.pd-variant-btn-active,
+.pd-variant-btn-active:hover {
+    background: var(--mi-purple);
+    border-color: var(--mi-purple);
+    color: #fff;
+}
+
+.pd-variant-msg {
+    margin: 12px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mi-sale);
+}
+
+/* Actions */
+.pd-actions {
+    margin-bottom: 20px;
+}
+
 .pd-meta p {
     margin: 6px 0;
     font-size: 14px;
     color: var(--mi-text);
+}
+
+/* Tags */
+.pd-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.pd-tag {
+    background: #f6eefc;
+    color: var(--mi-purple);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
 }
 
 /* Buttons */
@@ -251,6 +466,13 @@
     width: 100%;
 }
 
+.pd-btn-disabled,
+.pd-btn-disabled:hover {
+    background-color: #c9c9c9;
+    color: #fff;
+    cursor: not-allowed;
+}
+
 /* ---------- Recommended items ---------- */
 .pd-section-title {
     text-align: center;
@@ -278,12 +500,32 @@
 .pd-rec-image img {
     width: 100%;
     border-radius: 4px;
+    display: block;
 }
 
 .pd-rec-price {
     color: var(--mi-purple);
     font-size: 18px;
     margin: 8px 0 0;
+}
+
+.pd-rec-original {
+    font-size: 12px;
+    color: #999;
+    margin: 4px 0 0;
+    text-decoration: line-through;
+}
+
+.pd-rec-badge {
+    display: inline-block;
+    align-self: center;
+    background: var(--mi-sale);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 4px;
 }
 
 .pd-rec-name {
@@ -293,11 +535,21 @@
     flex-grow: 1;
 }
 
-/* ---------- Reviews ---------- */
+.pd-rec-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pd-rec-name a:hover {
+    color: var(--mi-purple);
+}
+
+/* ---------- Tabs: description / ingredients / how to use / reviews ---------- */
 .pd-tabs {
     display: flex;
     gap: 6px;
     border-bottom: 1px solid var(--mi-border);
+    overflow-x: auto;
 }
 
 .pd-tab-btn {
@@ -309,6 +561,7 @@
     color: var(--mi-muted);
     cursor: pointer;
     border-bottom: 3px solid transparent;
+    white-space: nowrap;
 }
 
 .pd-tab-btn.pd-tab-active {
@@ -328,6 +581,49 @@
     display: block;
 }
 
+/* Rich text written in the editor (description etc.) */
+.pd-richtext {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #444;
+    overflow-wrap: anywhere;
+}
+
+.pd-richtext p {
+    margin: 0 0 12px;
+}
+
+.pd-richtext ul,
+.pd-richtext ol {
+    margin: 0 0 12px;
+    padding-left: 22px;
+}
+
+.pd-richtext img,
+.pd-richtext video,
+.pd-richtext iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+.pd-richtext table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+}
+
+.pd-richtext th,
+.pd-richtext td {
+    border: 1px solid var(--mi-border);
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.pd-richtext a {
+    color: var(--mi-purple);
+}
+
+/* ---------- Reviews ---------- */
 .pd-review {
     border-bottom: 1px solid var(--mi-border);
     padding: 14px 0;
@@ -461,9 +757,10 @@
         grid-template-columns: 1fr;
     }
 
-    .pd-detail-image {
-        max-width: 420px;
+    .pd-gallery {
+        max-width: 460px;
         margin: 0 auto;
+        width: 100%;
     }
 
     .pd-recommended-grid {
@@ -471,7 +768,7 @@
     }
 }
 
-/* ---- 768px: sidebar sections stack, price/cart row stacks ---- */
+/* ---- 768px: sidebar sections stack ---- */
 @media (max-width: 768px) {
     .pd-page {
         padding: 20px 0;
@@ -502,7 +799,7 @@
     }
 }
 
-/* ---- 600px: recommended grid to 1 col, price row stacks ---- */
+/* ---- 600px: recommended grid to 1 col, cart button full width ---- */
 @media (max-width: 600px) {
     .pd-recommended-grid {
         grid-template-columns: 1fr;
@@ -530,7 +827,7 @@
         gap: 12px;
     }
 
-    .pd-btn-cart {
+    .pd-actions .pd-btn {
         width: 100%;
     }
 
@@ -539,10 +836,14 @@
     }
 
     .pd-tab-btn {
-        flex: 1;
-        padding: 12px 8px;
+        padding: 12px 12px;
         font-size: 13px;
         text-align: center;
+    }
+
+    .pd-thumb {
+        width: 58px;
+        height: 58px;
     }
 }
 
@@ -584,6 +885,10 @@
     .pd-btn {
         padding: 10px 16px;
         font-size: 13px;
+    }
+
+    .pd-variant-btn {
+        padding: 6px 12px;
     }
 
     .pd-star-rating {

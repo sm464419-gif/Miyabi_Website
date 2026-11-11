@@ -1,0 +1,155 @@
+/* =========================================================
+   Simple Account Form (Change Email / Change Password)
+   custom CSS — no Bootstrap
+   ========================================================= */
+
+:root {
+  --sform-purple: #7B2CBF;
+  --sform-purple-dark: #5a189a;
+  --sform-border: #ddd;
+  --sform-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.simple-form-page {
+  font-family: var(--sform-font);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+.simple-form-page__title {
+  color: var(--sform-purple);
+  margin: 0 0 24px;
+  font-size: 22px;
+}
+
+/* ---------- Form layout ---------- */
+
+.simple-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.simple-form__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.simple-form__label {
+  color: var(--sform-purple);
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.simple-form__error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+/* ---------- Raw Django widget styling ----------
+   {{ field }} renders <input>/<select>/<textarea> with no classes,
+   so style them generically inside the form. */
+
+.simple-form input[type="text"],
+.simple-form input[type="email"],
+.simple-form input[type="tel"],
+.simple-form input[type="number"],
+.simple-form input[type="password"],
+.simple-form select,
+.simple-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--sform-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+}
+
+.simple-form input[type="text"]:focus,
+.simple-form input[type="email"]:focus,
+.simple-form input[type="tel"]:focus,
+.simple-form input[type="number"]:focus,
+.simple-form input[type="password"]:focus,
+.simple-form select:focus,
+.simple-form textarea:focus {
+  outline: none;
+  border-color: var(--sform-purple);
+}
+
+/* ---------- Submit / cancel ---------- */
+
+.simple-form__submit {
+  background: var(--sform-purple);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.simple-form__submit:hover {
+  background: var(--sform-purple-dark);
+}
+
+.simple-form__cancel {
+  text-align: center;
+  color: var(--sform-purple);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.simple-form__cancel:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   Responsive breakpoints
+   ========================================================= */
+
+@media (max-width: 560px) {
+  .simple-form-page {
+    padding: 28px 14px;
+  }
+
+  .simple-form-page__title {
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+
+  .simple-form {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .simple-form-page {
+    padding: 22px 12px;
+  }
+
+  .simple-form-page__title {
+    font-size: 18px;
+  }
+
+  .simple-form input[type="text"],
+  .simple-form input[type="email"],
+  .simple-form input[type="tel"],
+  .simple-form input[type="number"],
+  .simple-form input[type="password"],
+  .simple-form select,
+  .simple-form textarea {
+    font-size: 13.5px;
+    padding: 9px 10px;
+  }
+}
