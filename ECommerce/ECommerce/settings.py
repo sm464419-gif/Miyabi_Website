@@ -1,4 +1,3 @@
-
 """
 Django settings for Miyabi E-commerce.
 
@@ -7,7 +6,7 @@ Local development:
 - Local media storage
 - Console email backend
 
-Production:
+Production (Vercel):
 - PostgreSQL database (Neon)
 - Cloudinary image storage
 - Environment variables for secrets
@@ -44,12 +43,12 @@ IS_HOSTED = (
 
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
-    "django-insecure-local-development-key-change-before-production"
+    "django-insecure-local-development-key-change-before-production",
 )
 
 DEBUG = os.environ.get(
     "DEBUG",
-    "False" if IS_HOSTED else "True"
+    "False" if IS_HOSTED else "True",
 ).lower() == "true"
 
 ALLOWED_HOSTS = [
@@ -59,26 +58,19 @@ ALLOWED_HOSTS = [
     ".vercel.app",
 ]
 
-# Add custom domain through environment variable if needed.
-CUSTOM_DOMAIN = os.environ.get("CUSTOM_DOMAIN")
-
-if CUSTOM_DOMAIN:
-    ALLOWED_HOSTS.append(CUSTOM_DOMAIN)
-
 CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
     "https://*.vercel.app",
 ]
 
-if CUSTOM_DOMAIN:
-    CSRF_TRUSTED_ORIGINS.append(
-        f"https://{CUSTOM_DOMAIN}"
-    )
+# Optional custom domain, set CUSTOM_DOMAIN in the environment.
+CUSTOM_DOMAIN = os.environ.get("CUSTOM_DOMAIN")
 
-SECURE_PROXY_SSL_HEADER = (
-    "HTTP_X_FORWARDED_PROTO",
-    "https",
-)
+if CUSTOM_DOMAIN:
+    ALLOWED_HOSTS.append(CUSTOM_DOMAIN)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{CUSTOM_DOMAIN}")
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
@@ -114,7 +106,6 @@ INSTALLED_APPS = [
     "pos",
 ]
 
-# Cloudinary applications
 if USE_CLOUDINARY:
     INSTALLED_APPS += [
         "cloudinary",
@@ -123,12 +114,10 @@ if USE_CLOUDINARY:
 
 
 # ==========================================================
-# CART SETTINGS
+# CART
 # ==========================================================
-
-# Your cart uses Django sessions.
-# Do not add 'cart' to INSTALLED_APPS because
-# your project does not contain a separate cart app.
+# The cart is stored in the session (ECommerce/cart_session.py).
+# Do NOT add 'cart' to INSTALLED_APPS: there is no cart app.
 
 CART_SESSION_ID = "cart"
 
@@ -139,25 +128,23 @@ CART_SESSION_ID = "cart"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 
 # ==========================================================
-# URL CONFIGURATION
+# URLS / WSGI
 # ==========================================================
 
 ROOT_URLCONF = "ECommerce.urls"
+
+WSGI_APPLICATION = "ECommerce.wsgi.application"
 
 
 # ==========================================================
@@ -167,13 +154,8 @@ ROOT_URLCONF = "ECommerce.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-
-        "DIRS": [
-            BASE_DIR / "templates",
-        ],
-
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
-
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
@@ -186,24 +168,18 @@ TEMPLATES = [
 
 
 # ==========================================================
-# WSGI
-# ==========================================================
-
-WSGI_APPLICATION = "ECommerce.wsgi.application"
-
-
-# ==========================================================
 # DATABASE
 # ==========================================================
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+    # Neon / PostgreSQL. conn_max_age=0 closes the connection after each
+    # request, which is what serverless platforms like Vercel need.
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
+            conn_max_age=0,
             ssl_require=True,
         )
     }
@@ -222,30 +198,10 @@ else:
 # ==========================================================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "UserAttributeSimilarityValidator"
-        ),
-    },
-    {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "MinimumLengthValidator"
-        ),
-    },
-    {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "CommonPasswordValidator"
-        ),
-    },
-    {
-        "NAME": (
-            "django.contrib.auth.password_validation."
-            "NumericPasswordValidator"
-        ),
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
@@ -270,11 +226,8 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# WhiteNoise compressed static files
 STORAGES = {
     "default": {
         "BACKEND": (
@@ -283,11 +236,10 @@ STORAGES = {
             else "django.core.files.storage.FileSystemStorage"
         ),
     },
-
+    # No manifest: avoids "Missing staticfiles manifest entry" 500 errors
+    # when collectstatic has not been run during the Vercel build.
     "staticfiles": {
-        "BACKEND": (
-            "whitenoise.storage.CompressedManifestStaticFilesStorage"
-        ),
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
@@ -316,36 +268,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ==========================================================
-# EMAIL CONFIGURATION
+# EMAIL
 # ==========================================================
 
-EMAIL_HOST_USER = os.environ.get(
-    "EMAIL_HOST_USER",
-    ""
-)
-
-EMAIL_HOST_PASSWORD = os.environ.get(
-    "EMAIL_HOST_PASSWORD",
-    ""
-)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.smtp.EmailBackend"
-    )
-
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_USE_TLS = True
-
     EMAIL_HOST = "smtp.gmail.com"
-
     EMAIL_PORT = 587
-
 else:
-
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.console.EmailBackend"
-    )
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # ==========================================================
